@@ -162,9 +162,12 @@ export default function EntregasScreen() {
         ),
       );
       setAbaSelecionada("entregues");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao marcar entrega:", error);
-      showAlert("Erro", "Não foi possível marcar como entregue.");
+      showAlert(
+        "Erro",
+        error?.message || "Não foi possível marcar como entregue.",
+      );
     } finally {
       setEntregaAtualizandoId(null);
     }
