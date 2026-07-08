@@ -10,6 +10,7 @@ const STATUS_PAGAMENTO = {
   aguardandoConfiguracao: "aguardando_configuracao",
   pendente: "pendente",
   aprovado: "aprovado",
+  pago: "pago",
   recusado: "recusado",
   cancelado: "cancelado",
   estornado: "estornado",

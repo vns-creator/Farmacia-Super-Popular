@@ -794,12 +794,20 @@ exports.marcarPedidoEntregue = onCall(async (request) => {
   }
 
   const now = admin.firestore.FieldValue.serverTimestamp();
-
-  await pedidoRef.update({
+  const atualizacao = {
     status: "entregue",
     entregueEm: now,
     atualizadoEm: now,
-  });
+  };
+
+  // Dinheiro e cartao na entrega sao cobrados no ato da entrega, entao
+  // confirmar a entrega ja confirma o pagamento. Pix e cartao online tem
+  // seu proprio fluxo de confirmacao (Mercado Pago) e nao sao alterados aqui.
+  if (!isPagamentoOnline(pedido.pagamento)) {
+    atualizacao["pagamentoDetalhes.status"] = STATUS_PAGAMENTO.pago;
+  }
+
+  await pedidoRef.update(atualizacao);
 
   if (pedido.userUid) {
     await db.collection("notificacoes").add({
