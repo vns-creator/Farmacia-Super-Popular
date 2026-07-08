@@ -1,0 +1,308 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function userProfile() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid));
+    }
+
+    function hasProfile(profile) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        && userProfile().data.perfil == profile
+        && userProfile().data.ativo == true;
+    }
+
+    function isGeneralAdmin() {
+      return hasProfile("admin")
+        && (
+          userProfile().data.adminGeral == true
+          || !userProfile().data.keys().hasAny(["filialId"])
+          || userProfile().data.filialId == null
+        );
+    }
+
+    function canAccessFilial(filialId) {
+      return isGeneralAdmin()
+        || (
+          hasProfile("admin")
+          && userProfile().data.filialId == filialId
+        );
+    }
+
+    function isValidProductFilialIds() {
+      return !request.resource.data.keys().hasAny(["filialIds"])
+        || (
+          request.resource.data.filialIds is list
+          && request.resource.data.filialIds.hasOnly([
+            "filial-efapi-tancredo",
+            "filial-efapi-atilio-fontana",
+            "filial-palmital",
+            "filial-lider"
+          ])
+        );
+    }
+
+    function canWriteProductFilial() {
+      return isGeneralAdmin()
+        || (
+          hasProfile("admin")
+          && request.resource.data.filialId == userProfile().data.filialId
+          && (
+            !request.resource.data.keys().hasAny(["filialIds"])
+            || (
+              request.resource.data.filialIds.size() == 1
+              && request.resource.data.filialIds[0] == userProfile().data.filialId
+            )
+          )
+        );
+    }
+
+    function isActiveUser() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        && userProfile().data.ativo == true;
+    }
+
+    function onlyChanges(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
+    function isSequenceDocument(sequenceId) {
+      return sequenceId in ["clientes", "pedidos"];
+    }
+
+    function isValidSequenceCreate(sequenceId) {
+      return isSignedIn()
+        && isSequenceDocument(sequenceId)
+        && request.resource.data.keys().hasOnly(["valor", "atualizadoEm"])
+        && request.resource.data.valor == 1;
+    }
+
+    function isValidSequenceIncrement(sequenceId) {
+      return isSignedIn()
+        && isSequenceDocument(sequenceId)
+        && onlyChanges(["valor", "atualizadoEm"])
+        && request.resource.data.valor == resource.data.valor + 1;
+    }
+
+    match /usuarios/{uid} {
+      allow read: if isOwner(uid)
+        || isGeneralAdmin()
+        || (
+          hasProfile("admin")
+          && resource.data.filialId == userProfile().data.filialId
+        );
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasOnly([
+          "uid",
+          "email",
+          "nome",
+          "perfil",
+          "ativo",
+          "criadoEm",
+          "atualizadoEm"
+        ])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.perfil == "cliente"
+        && request.resource.data.ativo == true;
+      allow update: if isGeneralAdmin()
+        || (
+          hasProfile("admin")
+          && resource.data.filialId == userProfile().data.filialId
+          && request.resource.data.filialId == userProfile().data.filialId
+        )
+        || (
+          isOwner(uid)
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.perfil == resource.data.perfil
+          && request.resource.data.ativo == resource.data.ativo
+          && onlyChanges(["email", "nome", "atualizadoEm"])
+        );
+      allow delete: if false;
+    }
+
+    match /pedidos/{pedidoId} {
+      // Pedidos novos sao criados pela Cloud Function, que recalcula valores.
+      allow create: if false;
+
+      // Permite o usuario logado ler os proprios pedidos novos e legados.
+      allow read: if isActiveUser()
+        && (
+          resource.data.userUid == request.auth.uid
+          || resource.data.userId == request.auth.uid
+          || resource.data.entregadorId == request.auth.uid
+          || canAccessFilial(resource.data.filialId)
+        );
+
+      allow update: if (
+          canAccessFilial(resource.data.filialId)
+          && request.resource.data.filialId == resource.data.filialId
+          && request.resource.data.userUid == resource.data.userUid
+          && request.resource.data.total == resource.data.total
+          && request.resource.data.itens == resource.data.itens
+          && onlyChanges([
+            "status",
+            "entregadorId",
+            "entregadorNome",
+            "observacoesInternas",
+            "atualizadoEm"
+          ])
+        )
+        || (
+          hasProfile("entregador")
+          && resource.data.entregadorId == request.auth.uid
+          && resource.data.filialId == userProfile().data.filialId
+          && request.resource.data.entregadorId == request.auth.uid
+          && request.resource.data.status == "entregue"
+          && onlyChanges(["status", "entregueEm", "atualizadoEm"])
+        );
+
+      allow delete: if false;
+    }
+
+    match /clientesPorUid/{uid} {
+      allow read, create, update: if isOwner(uid) && isActiveUser();
+      allow delete: if false;
+
+      match /enderecos/{enderecoId} {
+        allow read, create, update, delete: if isOwner(uid) && isActiveUser();
+      }
+    }
+
+    match /clientes/{clienteId} {
+      allow create: if isActiveUser()
+        && request.resource.data.uid == request.auth.uid;
+
+      allow read, update: if isActiveUser()
+        && resource.data.uid == request.auth.uid;
+
+      allow delete: if false;
+    }
+
+    match /notificacoes/{notificacaoId} {
+      allow read: if isActiveUser()
+        && (
+          resource.data.userUid == request.auth.uid
+          || (resource.data.perfilDestino == "admin" && hasProfile("admin"))
+        );
+
+      allow create: if isActiveUser()
+        && request.resource.data.keys().hasOnly([
+          "titulo",
+          "mensagem",
+          "pedidoId",
+          "userUid",
+          "perfilDestino",
+          "lida",
+          "criadoEm"
+        ])
+        && request.resource.data.titulo is string
+        && request.resource.data.mensagem is string
+        && request.resource.data.lida == false
+        && (
+          request.resource.data.userUid == request.auth.uid
+          || request.resource.data.perfilDestino == "admin"
+          || hasProfile("admin")
+          || hasProfile("entregador")
+        );
+
+      allow update: if isActiveUser()
+        && (
+          resource.data.userUid == request.auth.uid
+          || (resource.data.perfilDestino == "admin" && hasProfile("admin"))
+        )
+        && onlyChanges(["lida"])
+        && request.resource.data.lida is bool;
+
+      allow delete: if false;
+    }
+
+    match /produtos/{produtoId} {
+      allow read: if true;
+      allow create, update: if canWriteProductFilial()
+        && request.resource.data.nome is string
+        && request.resource.data.categoria in [
+          "ofertas",
+          "manipulados",
+          "perfumaria",
+          "higiene",
+          "baby"
+        ]
+        && request.resource.data.preco is number
+        && request.resource.data.preco > 0
+        && request.resource.data.ativo is bool
+        && request.resource.data.emOferta is bool
+        && request.resource.data.destaque is bool
+        && isValidProductFilialIds()
+        && (
+          !request.resource.data.keys().hasAny(["controlarEstoque"])
+          || request.resource.data.controlarEstoque is bool
+        )
+        && (
+          !request.resource.data.keys().hasAny(["estoque"])
+          || (
+            request.resource.data.estoque is int
+            && request.resource.data.estoque >= 0
+          )
+        )
+        && (
+          !request.resource.data.keys().hasAny(["estoqueMinimo"])
+          || (
+            request.resource.data.estoqueMinimo is int
+            && request.resource.data.estoqueMinimo >= 0
+          )
+        )
+        && (
+          !request.resource.data.keys().hasAny(["isMedicamento"])
+          || request.resource.data.isMedicamento is bool
+        )
+        && (
+          !request.resource.data.keys().hasAny(["principioAtivo"])
+          || request.resource.data.principioAtivo is string
+        )
+        && (
+          !request.resource.data.keys().hasAny(["codigoBarras"])
+          || request.resource.data.codigoBarras is string
+        )
+        && (
+          !request.resource.data.keys().hasAny(["temTamanhos"])
+          || request.resource.data.temTamanhos is bool
+        )
+        && (
+          !request.resource.data.keys().hasAny(["tamanhos"])
+          || request.resource.data.tamanhos is list
+        )
+        && (
+          !request.resource.data.keys().hasAny(["estoquePorTamanho"])
+          || request.resource.data.estoquePorTamanho is map
+        );
+      allow delete: if canAccessFilial(resource.data.filialId);
+    }
+
+    match /alertasSanitarios/{alertaId} {
+      allow read: if true;
+      allow create, update: if isGeneralAdmin()
+        && request.resource.data.principioAtivo is string
+        && request.resource.data.mensagem is string
+        && request.resource.data.mensagem.size() > 0
+        && request.resource.data.ativo is bool;
+      allow delete: if isGeneralAdmin();
+    }
+
+    match /sequencias/{sequenceId} {
+      allow read: if isSignedIn();
+      allow create, update: if false;
+      allow delete: if false;
+    }
+  }
+}
