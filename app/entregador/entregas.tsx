@@ -1,14 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import {
-  collection,
-  doc,
-  onSnapshot,
-  query,
-  serverTimestamp,
-  updateDoc,
-  where,
-} from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -23,7 +16,6 @@ import {
 import { showAlert } from "@/services/alert";
 import { useAuth } from "../../context/AuthContext";
 import { db } from "../../firebaseConfig";
-import { criarNotificacao } from "../../services/notifications";
 
 type Entrega = {
   id: string;
@@ -149,11 +141,14 @@ export default function EntregasScreen() {
   const marcarEntregue = async (entrega: Entrega) => {
     try {
       setEntregaAtualizandoId(entrega.id);
-      await updateDoc(doc(db, "pedidos", entrega.id), {
-        status: "entregue",
-        entregueEm: serverTimestamp(),
-        atualizadoEm: serverTimestamp(),
-      });
+
+      const marcarPedidoEntregue = httpsCallable(
+        getFunctions(),
+        "marcarPedidoEntregue",
+      );
+
+      await marcarPedidoEntregue({ pedidoId: entrega.id });
+
       setEntregas((entregasAtuais) =>
         entregasAtuais.map((item) =>
           item.id === entrega.id
@@ -167,15 +162,6 @@ export default function EntregasScreen() {
         ),
       );
       setAbaSelecionada("entregues");
-
-      if (entrega.userUid) {
-        await criarNotificacao({
-          titulo: "Pedido entregue",
-          mensagem: `${entrega.codigoPedido || entrega.id} foi marcado como entregue.`,
-          pedidoId: entrega.id,
-          userUid: entrega.userUid,
-        });
-      }
     } catch (error) {
       console.error("Erro ao marcar entrega:", error);
       showAlert("Erro", "Não foi possível marcar como entregue.");

@@ -564,26 +564,31 @@ exports.criarPedido = onCall(async (request) => {
     const now = admin.firestore.FieldValue.serverTimestamp();
 
     // Um mesmo produto pode aparecer mais de uma vez no carrinho (tamanhos
-    // diferentes). O controle de estoque agrega por produto quando ele nao
-    // tem tamanhos, e por produto+tamanho quando tem (cada tamanho tem seu
-    // proprio saldo, entao um esgotado nao pode ser coberto por outro).
-    function chaveEstoque(produtoCarrinho) {
-      return produtoCarrinho.tamanho
-        ? `${produtoCarrinho.id}::${produtoCarrinho.tamanho}`
-        : produtoCarrinho.id;
-    }
-
-    const quantidadeTotalPorChave = new Map();
+    // diferentes). O Firestore nao permite duas chamadas transaction.update()
+    // para o mesmo documento na mesma transacao, entao o update de cada
+    // produto e sempre montado uma unica vez, mesmo que ele tenha 2+
+    // tamanhos diferentes no carrinho.
+    const quantidadeTotalPorProduto = new Map();
+    const quantidadeTotalPorProdutoTamanho = new Map();
 
     produtos.forEach((produtoCarrinho) => {
-      const chave = chaveEstoque(produtoCarrinho);
-      quantidadeTotalPorChave.set(
-        chave,
-        (quantidadeTotalPorChave.get(chave) || 0) + produtoCarrinho.quantidade,
+      quantidadeTotalPorProduto.set(
+        produtoCarrinho.id,
+        (quantidadeTotalPorProduto.get(produtoCarrinho.id) || 0) +
+          produtoCarrinho.quantidade,
       );
+
+      if (produtoCarrinho.tamanho) {
+        const chave = `${produtoCarrinho.id}::${produtoCarrinho.tamanho}`;
+        quantidadeTotalPorProdutoTamanho.set(
+          chave,
+          (quantidadeTotalPorProdutoTamanho.get(chave) || 0) +
+            produtoCarrinho.quantidade,
+        );
+      }
     });
 
-    const chavesJaProcessadas = new Set();
+    const produtosJaProcessados = new Set();
 
     produtoDocs.forEach((produtoDoc, index) => {
       if (!produtoDoc.exists) {
@@ -597,55 +602,63 @@ exports.criarPedido = onCall(async (request) => {
         throw new HttpsError("failed-precondition", "Produto indisponivel.");
       }
 
-      const chave = chaveEstoque(produtoCarrinho);
-
-      if (chavesJaProcessadas.has(chave)) {
+      if (produtosJaProcessados.has(produtoCarrinho.id)) {
         return;
       }
-      chavesJaProcessadas.add(chave);
+      produtosJaProcessados.add(produtoCarrinho.id);
 
       const controlaEstoque = produtoAtual.controlarEstoque === true;
-      const quantidadeTotal = quantidadeTotalPorChave.get(chave) || 0;
 
-      if (produtoAtual.temTamanhos === true && produtoCarrinho.tamanho) {
-        const estoquePorTamanho = produtoAtual.estoquePorTamanho || {};
-        const estoqueAtualTamanho = Number(
-          estoquePorTamanho[produtoCarrinho.tamanho] || 0,
+      if (!controlaEstoque) {
+        return;
+      }
+
+      if (produtoAtual.temTamanhos === true) {
+        const tamanhosDoCarrinho = new Set(
+          produtos
+            .filter((p) => p.id === produtoCarrinho.id && p.tamanho)
+            .map((p) => p.tamanho),
         );
+        const estoquePorTamanho = produtoAtual.estoquePorTamanho || {};
+        const update = { atualizadoEm: now };
 
-        if (controlaEstoque && estoqueAtualTamanho < quantidadeTotal) {
-          throw new HttpsError(
-            "failed-precondition",
-            `Estoque insuficiente para ${produtoCarrinho.nome} (${produtoCarrinho.tamanho}).`,
-          );
+        for (const tamanho of tamanhosDoCarrinho) {
+          const quantidadeTotal =
+            quantidadeTotalPorProdutoTamanho.get(
+              `${produtoCarrinho.id}::${tamanho}`,
+            ) || 0;
+          const estoqueAtualTamanho = Number(estoquePorTamanho[tamanho] || 0);
+
+          if (estoqueAtualTamanho < quantidadeTotal) {
+            throw new HttpsError(
+              "failed-precondition",
+              `Estoque insuficiente para ${produtoCarrinho.nome} (${tamanho}).`,
+            );
+          }
+
+          update[`estoquePorTamanho.${tamanho}`] =
+            estoqueAtualTamanho - quantidadeTotal;
         }
 
-        if (controlaEstoque) {
-          transaction.update(produtoDoc.ref, {
-            [`estoquePorTamanho.${produtoCarrinho.tamanho}`]:
-              estoqueAtualTamanho - quantidadeTotal,
-            atualizadoEm: now,
-          });
-        }
-
+        transaction.update(produtoDoc.ref, update);
         return;
       }
 
       const estoqueAtual = Number(produtoAtual.estoque || 0);
+      const quantidadeTotal =
+        quantidadeTotalPorProduto.get(produtoCarrinho.id) || 0;
 
-      if (controlaEstoque && estoqueAtual < quantidadeTotal) {
+      if (estoqueAtual < quantidadeTotal) {
         throw new HttpsError(
           "failed-precondition",
           `Estoque insuficiente para ${produtoCarrinho.nome}.`,
         );
       }
 
-      if (controlaEstoque) {
-        transaction.update(produtoDoc.ref, {
-          estoque: estoqueAtual - quantidadeTotal,
-          atualizadoEm: now,
-        });
-      }
+      transaction.update(produtoDoc.ref, {
+        estoque: estoqueAtual - quantidadeTotal,
+        atualizadoEm: now,
+      });
     });
 
     if (nextClientNumber !== null) {
@@ -738,6 +751,69 @@ exports.criarPedido = onCall(async (request) => {
   });
 
   return { ok: true, ...resultado };
+});
+
+exports.marcarPedidoEntregue = onCall(async (request) => {
+  assertSignedIn(request);
+
+  const { pedidoId } = request.data || {};
+
+  if (!pedidoId) {
+    throw new HttpsError("invalid-argument", "Informe o pedidoId.");
+  }
+
+  const uid = request.auth.uid;
+  const usuarioSnap = await db.collection("usuarios").doc(uid).get();
+  const usuario = usuarioSnap.exists ? usuarioSnap.data() : null;
+
+  if (!usuario || usuario.perfil !== "entregador" || usuario.ativo !== true) {
+    throw new HttpsError(
+      "permission-denied",
+      "Conta sem permissao de entregador.",
+    );
+  }
+
+  const pedidoRef = db.collection("pedidos").doc(pedidoId);
+  const pedidoSnap = await pedidoRef.get();
+
+  if (!pedidoSnap.exists) {
+    throw new HttpsError("not-found", "Pedido nao encontrado.");
+  }
+
+  const pedido = pedidoSnap.data();
+
+  if (pedido.entregadorId !== uid) {
+    throw new HttpsError(
+      "permission-denied",
+      "Este pedido nao esta atribuido a voce.",
+    );
+  }
+
+  if (pedido.status === "entregue") {
+    return { ok: true, jaEstavaEntregue: true };
+  }
+
+  const now = admin.firestore.FieldValue.serverTimestamp();
+
+  await pedidoRef.update({
+    status: "entregue",
+    entregueEm: now,
+    atualizadoEm: now,
+  });
+
+  if (pedido.userUid) {
+    await db.collection("notificacoes").add({
+      titulo: "Pedido entregue",
+      mensagem: `${pedido.codigoPedido || pedidoId} foi marcado como entregue.`,
+      pedidoId,
+      userUid: pedido.userUid,
+      perfilDestino: null,
+      lida: false,
+      criadoEm: now,
+    });
+  }
+
+  return { ok: true };
 });
 
 exports.criarPagamentoPix = onCall({ secrets: [mercadoPagoAccessToken] }, async (request) => {
