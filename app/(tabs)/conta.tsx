@@ -220,23 +220,13 @@ export default function ContaScreen() {
         )}
 
         {isFarmaceuticoAtivo && (
-          <>
-            <TouchableOpacity
-              style={styles.botaoSecundario}
-              onPress={() => router.push("/admin/alertas")}
-              activeOpacity={0.9}
-            >
-              <Text style={styles.botaoSecundarioTexto}>Alertas sanitários</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.botaoSecundario}
-              onPress={() => router.push("/admin/produtos")}
-              activeOpacity={0.9}
-            >
-              <Text style={styles.botaoSecundarioTexto}>Gerenciar produtos</Text>
-            </TouchableOpacity>
-          </>
+          <TouchableOpacity
+            style={styles.botaoSecundario}
+            onPress={() => router.push("/admin/alertas")}
+            activeOpacity={0.9}
+          >
+            <Text style={styles.botaoSecundarioTexto}>Alertas sanitários</Text>
+          </TouchableOpacity>
         )}
 
         <TouchableOpacity

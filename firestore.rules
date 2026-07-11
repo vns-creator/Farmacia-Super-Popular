@@ -39,22 +39,6 @@ service cloud.firestore {
         );
     }
 
-    // Igual a canAccessFilial, mas tambem inclui o farmaceutico RT - usado
-    // so para excluir produtos, nao para pedidos/usuarios (fora do escopo
-    // dele).
-    function canManageProductFilial(filialId) {
-      return canAccessFilial(filialId)
-        || (
-          hasProfile("farmaceutico")
-          && (
-            userProfile().data.adminGeral == true
-            || !userProfile().data.keys().hasAny(["filialId"])
-            || userProfile().data.filialId == null
-            || userProfile().data.filialId == filialId
-          )
-        );
-    }
-
     function isValidProductFilialIds() {
       return !request.resource.data.keys().hasAny(["filialIds"])
         || (
@@ -68,22 +52,10 @@ service cloud.firestore {
         );
     }
 
-    // Farmaceutico RT tambem gerencia produtos (principio ativo, PMC, bula),
-    // com o mesmo escopo por filial que um admin de filial teria.
-    function isFarmaceuticoGeral() {
-      return hasProfile("farmaceutico")
-        && (
-          userProfile().data.adminGeral == true
-          || !userProfile().data.keys().hasAny(["filialId"])
-          || userProfile().data.filialId == null
-        );
-    }
-
     function canWriteProductFilial() {
       return isGeneralAdmin()
-        || isFarmaceuticoGeral()
         || (
-          (hasProfile("admin") || hasProfile("farmaceutico"))
+          hasProfile("admin")
           && request.resource.data.filialId == userProfile().data.filialId
           && (
             !request.resource.data.keys().hasAny(["filialIds"])
@@ -329,7 +301,7 @@ service cloud.firestore {
           !request.resource.data.keys().hasAny(["estoquePorTamanho"])
           || request.resource.data.estoquePorTamanho is map
         );
-      allow delete: if canManageProductFilial(resource.data.filialId);
+      allow delete: if canAccessFilial(resource.data.filialId);
     }
 
     match /alertasSanitarios/{alertaId} {
