@@ -4,7 +4,6 @@ import React, { useMemo, useState } from "react";
 import {
   FlatList,
   Image,
-  type ImageSourcePropType,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -21,14 +20,13 @@ import { SeletorTamanhoModal } from "../../components/SeletorTamanhoModal";
 import { useCarrinho } from "../../context/CarContext";
 import { useFilial } from "../../context/FilialContext";
 import { formatarMoeda } from "../../services/formatters";
-import { useProdutos } from "../../services/products";
+import { getCategoriaLabel, useProdutos, type ProdutoFirestore } from "../../services/products";
 
 type HomeProduct = {
   id: string;
   nome: string;
   categoria: string;
   preco: number;
-  imagem?: ImageSourcePropType;
   imagemUrl?: string;
   descricao?: string;
   filialId?: string | null;
@@ -41,6 +39,28 @@ type HomeProduct = {
   tamanhos?: string[];
   estoquePorTamanho?: Record<string, number>;
 };
+
+function mapProdutoParaHome(produto: ProdutoFirestore): HomeProduct {
+  return {
+    id: produto.id,
+    nome: produto.nome,
+    categoria: produto.emOferta
+      ? "Oferta"
+      : produto.categoriaLabel || getCategoriaLabel(produto.categoria),
+    preco: produto.preco,
+    imagemUrl: produto.imagemUrl,
+    descricao: produto.descricao,
+    filialId: produto.filialId,
+    filialIds: produto.filialIds,
+    filialNome: produto.filialNome,
+    controlarEstoque: produto.controlarEstoque,
+    estoque: produto.estoque,
+    estoqueMinimo: produto.estoqueMinimo,
+    temTamanhos: produto.temTamanhos,
+    tamanhos: produto.tamanhos,
+    estoquePorTamanho: produto.estoquePorTamanho,
+  };
+}
 
 const categorias = [
   {
@@ -75,111 +95,6 @@ const categorias = [
   },
 ];
 
-const destaques = [
-  {
-    id: "home-1",
-    nome: "Dipirona 1g",
-    categoria: "Oferta do dia",
-    preco: 12.9,
-    imagem: require("../../assets/images/dipirona.png"),
-  },
-  {
-    id: "home-2",
-    nome: "Vitamina C",
-    categoria: "Mais vendido",
-    preco: 19.9,
-    imagem: require("../../assets/images/vitaminac.png"),
-  },
-  {
-    id: "home-3",
-    nome: "Fralda Baby",
-    categoria: "Baby",
-    preco: 39.9,
-    imagem: require("../../assets/images/fraldababy.png"),
-  },
-  {
-    id: "home-4",
-    nome: "Protetor Solar",
-    categoria: "Perfumaria",
-    preco: 32.9,
-    imagem: require("../../assets/images/protetorsolar.png"),
-  },
-];
-
-const catalogoBusca = [
-  ...destaques,
-  {
-    id: "busca-dipirona",
-    nome: "Dipirona",
-    categoria: "Medicamentos",
-    preco: 12.9,
-    imagem: require("../../assets/images/dipirona.png"),
-  },
-  {
-    id: "busca-paracetamol",
-    nome: "Paracetamol",
-    categoria: "Medicamentos",
-    preco: 9.9,
-    imagem: require("../../assets/images/paracetamol.png"),
-  },
-  {
-    id: "busca-sabonete",
-    nome: "Sabonete Líquido",
-    categoria: "Higiene",
-    preco: 14.9,
-    imagem: require("../../assets/images/saboneteliquido.png"),
-  },
-  {
-    id: "busca-creme-dental",
-    nome: "Creme Dental",
-    categoria: "Higiene",
-    preco: 8.9,
-    imagem: require("../../assets/images/cremedental.png"),
-  },
-  {
-    id: "busca-shampoo",
-    nome: "Shampoo",
-    categoria: "Perfumaria",
-    preco: 18.9,
-    imagem: require("../../assets/images/shampoo.png"),
-  },
-  {
-    id: "busca-protetor",
-    nome: "Protetor Solar",
-    categoria: "Perfumaria",
-    preco: 32.9,
-    imagem: require("../../assets/images/protetorsolar.png"),
-  },
-  {
-    id: "busca-fralda",
-    nome: "Fralda Baby",
-    categoria: "Baby",
-    preco: 39.9,
-    imagem: require("../../assets/images/fraldababy.png"),
-  },
-  {
-    id: "busca-lenco",
-    nome: "Lenço Umedecido",
-    categoria: "Baby",
-    preco: 11.9,
-    imagem: require("../../assets/images/lencoumedecido.png"),
-  },
-  {
-    id: "busca-melatonina",
-    nome: "Melatonina",
-    categoria: "Medicamentos",
-    preco: 29.9,
-    imagem: require("../../assets/images/melatonina.png"),
-  },
-  {
-    id: "busca-omega3",
-    nome: "Ômega 3",
-    categoria: "Medicamentos",
-    preco: 34.9,
-    imagem: require("../../assets/images/omega3manipulado.png"),
-  },
-];
-
 export default function HomeScreen() {
   const router = useRouter();
   const [busca, setBusca] = useState("");
@@ -205,66 +120,19 @@ export default function HomeScreen() {
 
   const produtosFiltrados = useMemo<HomeProduct[]>(() => {
     const termo = busca.trim().toLowerCase();
-    const produtosBase =
-      produtosDestaque.length > 0
-        ? produtosDestaque.map((produto) => ({
-            id: produto.id,
-            nome: produto.nome,
-            categoria: produto.emOferta
-              ? "Oferta"
-              : produto.categoriaLabel || produto.categoria,
-            preco: produto.preco,
-            imagemUrl: produto.imagemUrl,
-            descricao: produto.descricao,
-            filialId: produto.filialId,
-            filialIds: produto.filialIds,
-            filialNome: produto.filialNome,
-            controlarEstoque: produto.controlarEstoque,
-            estoque: produto.estoque,
-            estoqueMinimo: produto.estoqueMinimo,
-            temTamanhos: produto.temTamanhos,
-            tamanhos: produto.tamanhos,
-            estoquePorTamanho: produto.estoquePorTamanho,
-          }))
-        : destaques;
+    const produtosBase = produtosDestaque.map(mapProdutoParaHome);
 
     if (!termo) return produtosBase;
 
-    if (produtosCatalogo.length > 0) {
-      return produtosCatalogo
-        .map((produto) => ({
-          id: produto.id,
-          nome: produto.nome,
-          categoria: produto.emOferta
-            ? "Oferta"
-            : produto.categoriaLabel || produto.categoria,
-          preco: produto.preco,
-          imagemUrl: produto.imagemUrl,
-          descricao: produto.descricao,
-          filialId: produto.filialId,
-          filialIds: produto.filialIds,
-          filialNome: produto.filialNome,
-          controlarEstoque: produto.controlarEstoque,
-          estoque: produto.estoque,
-          estoqueMinimo: produto.estoqueMinimo,
-          temTamanhos: produto.temTamanhos,
-          tamanhos: produto.tamanhos,
-          estoquePorTamanho: produto.estoquePorTamanho,
-        }))
-        .filter((item) =>
-          [item.nome, item.categoria, item.descricao]
-            .filter(Boolean)
-            .join(" ")
-            .toLowerCase()
-            .includes(termo),
-        );
-    }
-
-    return [...produtosBase, ...catalogoBusca].filter(
-      (item) =>
-        item.nome.toLowerCase().includes(termo) ||
-        item.categoria.toLowerCase().includes(termo),
-    );
+    return produtosCatalogo
+      .map(mapProdutoParaHome)
+      .filter((item) =>
+        [item.nome, item.categoria, item.descricao]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(termo),
+      );
   }, [busca, produtosCatalogo, produtosDestaque]);
 
   const renderProduto = ({ item }: { item: HomeProduct }) => {
@@ -283,7 +151,7 @@ export default function HomeScreen() {
     const atingiuEstoque = controlaEstoque && quantidade >= estoqueDisponivel;
     const imagemSource = item.imagemUrl
       ? { uri: item.imagemUrl }
-      : item.imagem || require("../../assets/images/logo.png");
+      : require("../../assets/images/logo.png");
 
     return (
       <View style={styles.cardProduto}>
