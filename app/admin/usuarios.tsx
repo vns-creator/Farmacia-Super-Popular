@@ -19,7 +19,11 @@ import {
   View,
 } from "react-native";
 import { showAlert } from "@/services/alert";
-import { useAuth, type PerfilUsuario } from "../../context/AuthContext";
+import {
+  getPerfilLabel,
+  useAuth,
+  type PerfilUsuario,
+} from "../../context/AuthContext";
 import { filiais, getFilialById } from "../../constants/filiais";
 import { db } from "../../firebaseConfig";
 
@@ -35,7 +39,7 @@ type UsuarioAdmin = {
   adminGeral?: boolean;
 };
 
-const perfis: PerfilUsuario[] = ["cliente", "entregador", "admin"];
+const perfis: PerfilUsuario[] = ["cliente", "entregador", "farmaceutico", "admin"];
 
 export default function AdminUsuariosScreen() {
   const router = useRouter();
@@ -216,7 +220,7 @@ export default function AdminUsuariosScreen() {
                     ativo && styles.perfilBotaoTextoAtivo,
                   ]}
                 >
-                  {perfilOpcao}
+                  {getPerfilLabel(perfilOpcao)}
                 </Text>
               </TouchableOpacity>
             );

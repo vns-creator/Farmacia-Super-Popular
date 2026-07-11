@@ -99,7 +99,11 @@ const produtoInicial = {
 export default function AdminProdutosScreen() {
   const router = useRouter();
   const { perfil } = useAuth();
-  const isAdminAtivo = perfil?.perfil === "admin" && perfil.ativo;
+  // Farmaceutico RT tambem gerencia produtos (principio ativo, PMC, bula),
+  // com o mesmo escopo por filial que um admin de filial teria.
+  const isAdminAtivo =
+    (perfil?.perfil === "admin" || perfil?.perfil === "farmaceutico") &&
+    perfil.ativo;
   const isAdminGeral = isAdminAtivo && (perfil?.adminGeral === true || !perfil?.filialId);
   const filialUsuarioId = perfil?.filialId || null;
   const [produtos, setProdutos] = useState<ProdutoFirestore[]>([]);

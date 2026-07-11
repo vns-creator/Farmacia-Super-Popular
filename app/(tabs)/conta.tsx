@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native";
 import { showAlert } from "@/services/alert";
-import { useAuth } from "../../context/AuthContext";
+import { getPerfilLabel, useAuth } from "../../context/AuthContext";
 
 export default function ContaScreen() {
   const { user, perfil, logout } = useAuth();
@@ -22,6 +22,8 @@ export default function ContaScreen() {
     isAdminAtivo && (perfil?.adminGeral === true || !perfil?.filialId);
   const isEntregadorAtivo =
     perfil?.perfil === "entregador" && perfil.ativo;
+  const isFarmaceuticoAtivo =
+    perfil?.perfil === "farmaceutico" && perfil.ativo;
 
   const voltar = () => {
     if (router.canGoBack()) {
@@ -102,7 +104,7 @@ export default function ContaScreen() {
           <Text style={styles.cardLabel}>Conta conectada</Text>
           <Text style={styles.nome}>{user.email}</Text>
           <Text style={styles.info}>E-mail: {user.email}</Text>
-          <Text style={styles.info}>Perfil: {perfil?.perfil || "cliente"}</Text>
+          <Text style={styles.info}>Perfil: {getPerfilLabel(perfil?.perfil)}</Text>
         </View>
 
         <TouchableOpacity
@@ -215,6 +217,26 @@ export default function ContaScreen() {
           >
             <Text style={styles.botaoSecundarioTexto}>Minhas entregas</Text>
           </TouchableOpacity>
+        )}
+
+        {isFarmaceuticoAtivo && (
+          <>
+            <TouchableOpacity
+              style={styles.botaoSecundario}
+              onPress={() => router.push("/admin/alertas")}
+              activeOpacity={0.9}
+            >
+              <Text style={styles.botaoSecundarioTexto}>Alertas sanitários</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.botaoSecundario}
+              onPress={() => router.push("/admin/produtos")}
+              activeOpacity={0.9}
+            >
+              <Text style={styles.botaoSecundarioTexto}>Gerenciar produtos</Text>
+            </TouchableOpacity>
+          </>
         )}
 
         <TouchableOpacity

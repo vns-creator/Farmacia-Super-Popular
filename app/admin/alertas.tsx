@@ -52,6 +52,10 @@ export default function AdminAlertasScreen() {
   const isAdminAtivo = perfil?.perfil === "admin" && perfil.ativo;
   const isAdminGeral =
     isAdminAtivo && (perfil?.adminGeral === true || !perfil?.filialId);
+  // Alertas sanitarios nao sao por filial - qualquer farmaceutico RT ativo
+  // pode gerenciar, geral ou vinculado a uma filial especifica.
+  const isFarmaceuticoAtivo = perfil?.perfil === "farmaceutico" && perfil.ativo;
+  const podeGerenciarAlertas = isAdminGeral || isFarmaceuticoAtivo;
   const { alertas, loading } = useAlertasSanitarios();
   const [form, setForm] = useState(alertaInicialForm);
   const [novoAlerta, setNovoAlerta] = useState("");
@@ -320,14 +324,15 @@ export default function AdminAlertasScreen() {
     }
   };
 
-  if (!isAdminGeral) {
+  if (!podeGerenciarAlertas) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.center}>
           <Ionicons name="lock-closed-outline" size={48} color="#1b5e20" />
           <Text style={styles.titulo}>Acesso restrito</Text>
           <Text style={styles.subtitulo}>
-            Somente o admin geral configura os alertas sanitários.
+            Somente o admin geral ou um farmacêutico RT configuram os alertas
+            sanitários.
           </Text>
         </View>
       </SafeAreaView>

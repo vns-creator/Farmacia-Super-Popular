@@ -16,7 +16,18 @@ import React, {
 } from "react";
 import { auth, db } from "../firebaseConfig";
 
-export type PerfilUsuario = "cliente" | "admin" | "entregador";
+export type PerfilUsuario = "cliente" | "admin" | "entregador" | "farmaceutico";
+
+const perfilLabels: Record<PerfilUsuario, string> = {
+  cliente: "Cliente",
+  entregador: "Entregador",
+  farmaceutico: "Farmacêutico RT",
+  admin: "Admin",
+};
+
+export function getPerfilLabel(perfil?: PerfilUsuario | null) {
+  return perfilLabels[perfil || "cliente"];
+}
 
 export type UsuarioPerfil = {
   uid: string;
