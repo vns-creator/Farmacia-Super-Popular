@@ -29,6 +29,17 @@ import {
   type AlertaSanitario,
   useAlertasSanitarios,
 } from "@/services/alertasSanitarios";
+import {
+  buscarMedicamentosAnvisaPorNome,
+  type MedicamentoAnvisa,
+} from "@/services/anvisaBulario";
+
+const ANVISA_BULA_FUNCTION_URL =
+  "https://us-central1-farmaciasp-app.cloudfunctions.net/abrirBulaAnvisa";
+
+function getUrlBulaAnvisa(numeroProcesso: string) {
+  return `${ANVISA_BULA_FUNCTION_URL}?numeroProcesso=${numeroProcesso}`;
+}
 
 const alertaInicialForm = {
   id: "",
@@ -53,6 +64,12 @@ export default function AdminAlertasScreen() {
   const [novaContraindicacao, setNovaContraindicacao] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [importando, setImportando] = useState(false);
+  const [buscaAnvisa, setBuscaAnvisa] = useState("");
+  const [resultadosAnvisa, setResultadosAnvisa] = useState<MedicamentoAnvisa[]>(
+    [],
+  );
+  const [buscandoAnvisa, setBuscandoAnvisa] = useState(false);
+  const [buscaAnvisaFeita, setBuscaAnvisaFeita] = useState(false);
   const [mensagemGeral, setMensagemGeral] = useState("");
   const [ativoGeral, setAtivoGeral] = useState(true);
   const [salvandoGeral, setSalvandoGeral] = useState(false);
@@ -257,6 +274,31 @@ export default function AdminAlertasScreen() {
     }
   };
 
+  const buscarNoAnvisa = async () => {
+    const termo = buscaAnvisa.trim();
+
+    if (!termo) return;
+
+    try {
+      setBuscandoAnvisa(true);
+      const resultados = await buscarMedicamentosAnvisaPorNome(termo);
+      setResultadosAnvisa(resultados);
+      setBuscaAnvisaFeita(true);
+    } catch (error) {
+      console.error("Erro ao consultar medicamentosAnvisa:", error);
+      showAlert(
+        "Erro na consulta",
+        "Nao foi possivel consultar o Bulario sincronizado agora.",
+      );
+    } finally {
+      setBuscandoAnvisa(false);
+    }
+  };
+
+  const usarPrincipioAtivoDaAnvisa = (medicamento: MedicamentoAnvisa) => {
+    setForm((prev) => ({ ...prev, principioAtivo: medicamento.nomeProduto }));
+  };
+
   const importarExemplo = async () => {
     try {
       setImportando(true);
@@ -408,6 +450,94 @@ export default function AdminAlertasScreen() {
                 )}
                 <Text style={styles.salvarBotaoTexto}>Salvar alerta geral</Text>
               </TouchableOpacity>
+            </View>
+
+            <View style={styles.formCard}>
+              <Text style={styles.formTitulo}>Consultar Bulario ANVISA</Text>
+              <Text style={styles.ajudaTexto}>
+                Pesquisa pelo nome comercial na base sincronizada da ANVISA
+                (medicamentosAnvisa), pra conferir a empresa e a situacao do
+                registro antes de preencher os alertas abaixo.
+              </Text>
+
+              <View style={styles.itemInputLinha}>
+                <TextInput
+                  style={[styles.input, styles.itemInput]}
+                  value={buscaAnvisa}
+                  onChangeText={setBuscaAnvisa}
+                  onSubmitEditing={buscarNoAnvisa}
+                  placeholder="Ex.: Dipirona Monoidratada"
+                  placeholderTextColor="#8a978f"
+                  returnKeyType="search"
+                />
+                <TouchableOpacity
+                  style={styles.itemAdicionarBotao}
+                  onPress={buscarNoAnvisa}
+                  activeOpacity={0.85}
+                  disabled={buscandoAnvisa}
+                >
+                  {buscandoAnvisa ? (
+                    <ActivityIndicator size="small" color="#1b5e20" />
+                  ) : (
+                    <Ionicons name="search" size={20} color="#1b5e20" />
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              {buscaAnvisaFeita && !buscandoAnvisa ? (
+                resultadosAnvisa.length === 0 ? (
+                  <Text style={styles.ajudaTexto}>
+                    Nada encontrado. A sincronizacao com a ANVISA pode ainda
+                    estar em andamento (roda aos poucos, em segundo plano).
+                  </Text>
+                ) : (
+                  <View style={styles.itemLista}>
+                    {resultadosAnvisa.map((medicamento) => (
+                      <View
+                        key={medicamento.numeroProcesso}
+                        style={styles.anvisaResultadoCard}
+                      >
+                        <TouchableOpacity
+                          style={styles.anvisaResultadoLinha}
+                          onPress={() => usarPrincipioAtivoDaAnvisa(medicamento)}
+                          activeOpacity={0.85}
+                        >
+                          <View style={styles.anvisaResultadoTextoArea}>
+                            <Text style={styles.anvisaResultadoNome}>
+                              {medicamento.nomeProduto}
+                            </Text>
+                            <Text style={styles.anvisaResultadoDetalhe}>
+                              {medicamento.empresa || "Empresa nao informada"} -{" "}
+                              {medicamento.situacaoRegistro ||
+                                "Situacao nao informada"}
+                            </Text>
+                            <Text style={styles.anvisaResultadoDetalhe}>
+                              Processo: {medicamento.numeroProcesso}
+                            </Text>
+                          </View>
+                          <Ionicons
+                            name="arrow-redo-outline"
+                            size={18}
+                            color="#1b5e20"
+                          />
+                        </TouchableOpacity>
+
+                        <Text style={styles.anvisaLinkLabel}>
+                          Link pronto para colar em &quot;Link da bula&quot; do
+                          produto:
+                        </Text>
+                        <TextInput
+                          style={styles.anvisaLinkInput}
+                          value={getUrlBulaAnvisa(medicamento.numeroProcesso)}
+                          editable={false}
+                          selectTextOnFocus
+                          multiline
+                        />
+                      </View>
+                    ))}
+                  </View>
+                )
+              ) : null}
             </View>
 
           <View style={styles.formCard}>
@@ -795,4 +925,41 @@ const styles = StyleSheet.create({
   badgeRevisadoTexto: { fontSize: 10, fontWeight: "800" },
   badgeRevisadoTextoAtivo: { color: "#1b5e20" },
   badgeRevisadoTextoInativo: { color: "#92400e" },
+  anvisaResultadoLinha: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    backgroundColor: "#f4f8f5",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  anvisaResultadoTextoArea: { flex: 1 },
+  anvisaResultadoNome: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#1f2937",
+  },
+  anvisaResultadoDetalhe: {
+    fontSize: 11,
+    color: "#6b7280",
+    marginTop: 2,
+  },
+  anvisaResultadoCard: { gap: 6 },
+  anvisaLinkLabel: {
+    fontSize: 11,
+    color: "#6b7280",
+    fontWeight: "700",
+  },
+  anvisaLinkInput: {
+    backgroundColor: "#f8faf8",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#edf2ee",
+    color: "#1b5e20",
+    fontSize: 11,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
 });

@@ -1,5 +1,6 @@
 const admin = require("firebase-admin");
 const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { defineSecret } = require("firebase-functions/params");
 const {
   FORMAS_PAGAMENTO,
@@ -1024,3 +1025,319 @@ exports.webhookPagamento = onRequest(
     }
   },
 );
+
+// ---------------------------------------------------------------------
+// Sincronizacao do Bulario Eletronico da ANVISA -> colecao Firestore
+// medicamentosAnvisa. Ver docs/bulario-anvisa.md para detalhes de setup.
+// ---------------------------------------------------------------------
+
+const anvisaSyncToken = defineSecret("ANVISA_SYNC_TOKEN");
+
+const ANVISA_BASE = "https://consultas.anvisa.gov.br/api";
+const ANVISA_PAGE_SIZE = 100;
+const ANVISA_REQUEST_DELAY_MS = 400; // nao martelar o servidor publico da ANVISA
+const ANVISA_MAX_RETRIES = 3;
+const ANVISA_MAX_PAGINAS_POR_EXECUCAO = 20; // ~2000 itens por execucao, para caber no timeout
+
+// O dominio fica atras do Cloudflare: sem User-Agent/Referer de navegador,
+// as requisicoes tomam 403 antes mesmo de chegar no backend da ANVISA.
+const ANVISA_HEADERS = {
+  Authorization: "Guest",
+  Accept: "application/json",
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36",
+  Referer: "https://consultas.anvisa.gov.br/",
+};
+
+function anvisaSleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function anvisaFetchComRetry(url, tentativa = 1) {
+  try {
+    const res = await fetch(url, { headers: ANVISA_HEADERS });
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status} em ${url}`);
+    }
+
+    return await res.json();
+  } catch (error) {
+    if (tentativa < ANVISA_MAX_RETRIES) {
+      const espera = 1000 * tentativa;
+      console.warn(
+        `Falha ao buscar ${url} (${error.message}), tentativa ${tentativa}/${ANVISA_MAX_RETRIES}`,
+      );
+      await anvisaSleep(espera);
+      return anvisaFetchComRetry(url, tentativa + 1);
+    }
+    throw error;
+  }
+}
+
+function anvisaBuscarPagina(page) {
+  // filter[nomeProduto] precisa estar presente na URL (mesmo vazio) - sem
+  // ele a API responde {"detail":"Erro inesperado"} em vez da listagem.
+  return anvisaFetchComRetry(
+    `${ANVISA_BASE}/consulta/bulario?count=${ANVISA_PAGE_SIZE}&filter%5BnomeProduto%5D=&page=${page}`,
+  );
+}
+
+function anvisaBuscarDetalhes(numeroProcesso) {
+  return anvisaFetchComRetry(
+    `${ANVISA_BASE}/consulta/medicamento/produtos/${numeroProcesso}`,
+  );
+}
+
+/**
+ * Nomes de campo vindos de engenharia reversa do bulario publico, nao de
+ * documentacao oficial da ANVISA. Se a ANVISA mudar a estrutura do site,
+ * confira o formato real (console.log do item bruto) e ajuste aqui.
+ */
+function anvisaNormalizarItem(item) {
+  return {
+    numeroProcesso: String(item.numProcesso ?? item.numeroProcesso ?? ""),
+    nomeProduto: String(item.nomeProduto ?? item.nome ?? ""),
+    empresa: item.razaoSocial ?? item.empresa ?? null,
+    categoriaRegulatoria: item.categoriaRegulatoria ?? item.categoria ?? null,
+    situacaoRegistro: item.situacaoRegistro ?? null,
+    dataAtualizacaoAnvisa:
+      item.dataFinalizacaoProcesso ?? item.dataAtualizacao ?? null,
+  };
+}
+
+/**
+ * NOTA: os IDs de bula (codigoBulaPaciente/codigoBulaProfissional, no
+ * endpoint de detalhes) sao tokens JWT que expiram em ~5 minutos - por
+ * isso NAO buscamos nem gravamos eles aqui. A sincronizacao so espelha o
+ * catalogo (nome, empresa, situacao do registro), que nao expira. O
+ * acesso a bula em si e feito ao vivo pela function abrirBulaAnvisa,
+ * bem mais abaixo, no momento em que o usuario clica em "Ver bula".
+ *
+ * Le e grava a pagina inteira em lote (getAll + batch) em vez de um
+ * get()+set() por item - com 100 itens por pagina, um loop item a item
+ * fazia ate 200 idas e vindas ao Firestore por pagina, o que estourava o
+ * timeout da function bem antes de terminar as 20 paginas da execucao.
+ */
+async function anvisaProcessarPagina(itensBrutos, forcarEscrita) {
+  const itens = itensBrutos
+    .map(anvisaNormalizarItem)
+    .filter((item) => item.numeroProcesso);
+
+  if (itens.length === 0) {
+    return { totalItens: 0, totalCriados: 0, totalAtualizados: 0 };
+  }
+
+  const refs = itens.map((item) =>
+    db.collection("medicamentosAnvisa").doc(item.numeroProcesso),
+  );
+  const snapshots = await db.getAll(...refs);
+
+  const batch = db.batch();
+  let totalCriados = 0;
+  let totalAtualizados = 0;
+
+  itens.forEach((item, index) => {
+    const snapshot = snapshots[index];
+    const existente = snapshot.exists ? snapshot.data() : null;
+    const mudou =
+      !existente ||
+      existente.dataAtualizacaoAnvisa !== item.dataAtualizacaoAnvisa;
+
+    if (!mudou && !forcarEscrita) return;
+
+    batch.set(
+      refs[index],
+      {
+        numeroProcesso: item.numeroProcesso,
+        nomeProduto: item.nomeProduto,
+        nomeProdutoBusca: item.nomeProduto.toLowerCase(),
+        empresa: item.empresa,
+        categoriaRegulatoria: item.categoriaRegulatoria,
+        situacaoRegistro: item.situacaoRegistro,
+        dataAtualizacaoAnvisa: item.dataAtualizacaoAnvisa,
+        atualizadoEm: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    if (existente) totalAtualizados++;
+    else totalCriados++;
+  });
+
+  await batch.commit();
+
+  return { totalItens: itens.length, totalCriados, totalAtualizados };
+}
+
+/**
+ * Processa ate ANVISA_MAX_PAGINAS_POR_EXECUCAO paginas a partir de onde a
+ * ultima execucao parou (checkpoint em anvisaSync/estado). Uma varredura
+ * completa do bulario (~7 mil itens) leva varias execucoes para concluir -
+ * isso e esperado, dado o limite de tempo de uma Cloud Function.
+ */
+async function executarSyncAnvisa({ forcarFull = false } = {}) {
+  const estadoRef = db.collection("anvisaSync").doc("estado");
+  const estadoSnap = await estadoRef.get();
+  const estadoAtual = estadoSnap.exists ? estadoSnap.data() : {};
+
+  let pagina = forcarFull ? 1 : estadoAtual.paginaAtual || 1;
+  const full = forcarFull || estadoAtual.full === true;
+
+  let totalItens = 0;
+  let totalCriados = 0;
+  let totalAtualizados = 0;
+  let totalErros = 0;
+  let paginasProcessadas = 0;
+  let concluiuVarreduraCompleta = false;
+
+  console.log(
+    `Iniciando sync ANVISA (${full ? "full" : "incremental"}) a partir da pagina ${pagina}`,
+  );
+
+  while (paginasProcessadas < ANVISA_MAX_PAGINAS_POR_EXECUCAO) {
+    const data = await anvisaBuscarPagina(pagina);
+    const itens = data.content ?? data.items ?? [];
+
+    if (itens.length === 0) {
+      concluiuVarreduraCompleta = true;
+      break;
+    }
+
+    try {
+      const resultadoPagina = await anvisaProcessarPagina(itens, full);
+      totalItens += resultadoPagina.totalItens;
+      totalCriados += resultadoPagina.totalCriados;
+      totalAtualizados += resultadoPagina.totalAtualizados;
+    } catch (error) {
+      totalErros += itens.length;
+      console.error(`Erro ao processar pagina ${pagina}: ${error.message}`);
+    }
+
+    paginasProcessadas++;
+    pagina++;
+    await anvisaSleep(ANVISA_REQUEST_DELAY_MS);
+  }
+
+  const novoEstado = concluiuVarreduraCompleta
+    ? {
+        paginaAtual: 1,
+        full: false,
+        ultimaExecucaoCompletaEm: admin.firestore.FieldValue.serverTimestamp(),
+      }
+    : { paginaAtual: pagina, full };
+
+  await estadoRef.set(novoEstado, { merge: true });
+
+  await db.collection("anvisaSyncLog").add({
+    tipo: full ? "full" : "incremental",
+    paginasProcessadas,
+    totalItens,
+    totalCriados,
+    totalAtualizados,
+    totalErros,
+    concluiuVarreduraCompleta,
+    executadoEm: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  const resumo = {
+    tipo: full ? "full" : "incremental",
+    paginasProcessadas,
+    totalItens,
+    totalCriados,
+    totalAtualizados,
+    totalErros,
+    concluiuVarreduraCompleta,
+  };
+
+  console.log("Sync ANVISA (trecho) concluido:", resumo);
+  return resumo;
+}
+
+// Roda a cada 10 minutos, processando um lote de paginas por vez ate cobrir
+// o bulario inteiro; depois disso, cada passagem so grava o que mudou.
+exports.sincronizarBularioAnvisa = onSchedule(
+  { schedule: "every 10 minutes", timeoutSeconds: 300 },
+  async () => {
+    await executarSyncAnvisa({ forcarFull: false });
+  },
+);
+
+// Disparo manual (ex.: curl com o token) para forcar uma varredura completa,
+// reprocessando tudo a partir da pagina 1 nas proximas execucoes agendadas.
+exports.sincronizarBularioAnvisaManual = onRequest(
+  { secrets: [anvisaSyncToken], timeoutSeconds: 300 },
+  async (request, response) => {
+    const token = request.query.token || request.headers["x-anvisa-token"];
+
+    if (token !== anvisaSyncToken.value()) {
+      response.status(401).json({ ok: false, erro: "Token invalido." });
+      return;
+    }
+
+    const full = request.query.full === "true";
+
+    try {
+      const resumo = await executarSyncAnvisa({ forcarFull: full });
+      response.status(200).json({ ok: true, ...resumo });
+    } catch (error) {
+      console.error("Erro na sincronizacao manual da ANVISA:", error);
+      response.status(500).json({ ok: false, erro: error.message });
+    }
+  },
+);
+
+/**
+ * Serve o PDF da bula direto, buscando um token de acesso na hora (ao
+ * vivo). Os IDs que o endpoint de detalhes devolve (codigoBulaPaciente /
+ * codigoBulaProfissional) sao tokens JWT que expiram em ~5 minutos -
+ * por isso NAO ficam salvos no Firestore, e essa function busca um token
+ * novo a cada chamada, exatamente quando o usuario clica em "Ver bula".
+ *
+ * Uso: /abrirBulaAnvisa?numeroProcesso=XXXX[&tipo=paciente|profissional]
+ * Essa URL e o que deve ser colado no campo "Link da bula" do produto.
+ */
+exports.abrirBulaAnvisa = onRequest(async (request, response) => {
+  const numeroProcesso = String(request.query.numeroProcesso || "").trim();
+  const tipo = request.query.tipo === "profissional" ? "profissional" : "paciente";
+
+  if (!numeroProcesso) {
+    response.status(400).json({ ok: false, erro: "Informe numeroProcesso." });
+    return;
+  }
+
+  try {
+    const detalhes = await anvisaBuscarDetalhes(numeroProcesso);
+    const tokenBula =
+      tipo === "profissional"
+        ? detalhes?.codigoBulaProfissional
+        : detalhes?.codigoBulaPaciente;
+
+    if (!tokenBula) {
+      response
+        .status(404)
+        .json({ ok: false, erro: "Bula nao encontrada para este processo." });
+      return;
+    }
+
+    const pdfRes = await fetch(
+      `${ANVISA_BASE}/consulta/medicamentos/arquivo/bula/parecer/${tokenBula}/?Authorization=`,
+      { headers: ANVISA_HEADERS },
+    );
+
+    if (!pdfRes.ok) {
+      response
+        .status(502)
+        .json({ ok: false, erro: "Falha ao baixar o PDF da bula na ANVISA." });
+      return;
+    }
+
+    const buffer = Buffer.from(await pdfRes.arrayBuffer());
+    response.set("Content-Type", "application/pdf");
+    response.set("Cache-Control", "no-store");
+    response.status(200).send(buffer);
+  } catch (error) {
+    console.error("Erro ao abrir bula da ANVISA:", error);
+    response.status(500).json({ ok: false, erro: error.message });
+  }
+});
