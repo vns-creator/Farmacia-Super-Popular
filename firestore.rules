@@ -123,12 +123,24 @@ service cloud.firestore {
         && request.resource.data.valor == resource.data.valor + 1;
     }
 
+    // Usuario "sem filial ainda" = recem-cadastrado (cliente) esperando um
+    // admin de filial adotar (atribuir filial + perfil). So conta como "sem
+    // filial" antes da atribuicao - depois de atribuido, fica preso aquela
+    // filial pra outros admins de filial.
+    function usuarioSemFilialAinda() {
+      return !resource.data.keys().hasAny(["filialId"])
+        || resource.data.filialId == null;
+    }
+
     match /usuarios/{uid} {
       allow read: if isOwner(uid)
         || isGeneralAdmin()
         || (
           hasProfile("admin")
-          && resource.data.filialId == userProfile().data.filialId
+          && (
+            resource.data.filialId == userProfile().data.filialId
+            || usuarioSemFilialAinda()
+          )
         );
       allow create: if isOwner(uid)
         && request.resource.data.keys().hasOnly([
@@ -146,7 +158,10 @@ service cloud.firestore {
       allow update: if isGeneralAdmin()
         || (
           hasProfile("admin")
-          && resource.data.filialId == userProfile().data.filialId
+          && (
+            resource.data.filialId == userProfile().data.filialId
+            || usuarioSemFilialAinda()
+          )
           && request.resource.data.filialId == userProfile().data.filialId
         )
         || (
