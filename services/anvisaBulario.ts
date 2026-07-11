@@ -66,3 +66,15 @@ export async function buscarMedicamentosAnvisaPorNome(
     mapMedicamentoAnvisa(docSnap.id, docSnap.data()),
   );
 }
+
+const ANVISA_BULA_FUNCTION_URL =
+  "https://us-central1-farmaciasp-app.cloudfunctions.net/abrirBulaAnvisa";
+
+/**
+ * Link pronto que busca a bula ao vivo (a Cloud Function abrirBulaAnvisa
+ * pega um token novo a cada chamada, entao esse link nunca expira, mesmo
+ * anos depois de gerado).
+ */
+export function getUrlBulaAnvisa(numeroProcesso: string) {
+  return `${ANVISA_BULA_FUNCTION_URL}?numeroProcesso=${numeroProcesso}`;
+}

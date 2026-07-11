@@ -43,6 +43,11 @@ import {
   mapProdutoFirestore,
   type ProdutoFirestore,
 } from "../../services/products";
+import {
+  buscarMedicamentosAnvisaPorNome,
+  getUrlBulaAnvisa,
+  type MedicamentoAnvisa,
+} from "../../services/anvisaBulario";
 
 const categorias: CategoriaProduto[] = [
   "ofertas",
@@ -103,6 +108,12 @@ export default function AdminProdutosScreen() {
   const [importando, setImportando] = useState(false);
   const [enviandoImagem, setEnviandoImagem] = useState(false);
   const [novoTamanho, setNovoTamanho] = useState("");
+  const [buscaAnvisa, setBuscaAnvisa] = useState("");
+  const [resultadosAnvisa, setResultadosAnvisa] = useState<MedicamentoAnvisa[]>(
+    [],
+  );
+  const [buscandoAnvisa, setBuscandoAnvisa] = useState(false);
+  const [buscaAnvisaFeita, setBuscaAnvisaFeita] = useState(false);
   const [busca, setBusca] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState<"todas" | CategoriaProduto>(
     "todas",
@@ -268,6 +279,9 @@ export default function AdminProdutosScreen() {
       categoria: isMedicamento ? "medicamentos" : produtoInicial.categoria,
     });
     setNovoTamanho("");
+    setBuscaAnvisa("");
+    setResultadosAnvisa([]);
+    setBuscaAnvisaFeita(false);
   };
 
   const selecionarAba = (aba: AbaProdutos) => {
@@ -279,6 +293,9 @@ export default function AdminProdutosScreen() {
       categoria: isMedicamento ? "medicamentos" : produtoInicial.categoria,
     });
     setNovoTamanho("");
+    setBuscaAnvisa("");
+    setResultadosAnvisa([]);
+    setBuscaAnvisaFeita(false);
   };
 
   const adicionarTamanho = () => {
@@ -314,6 +331,42 @@ export default function AdminProdutosScreen() {
         estoquePorTamanho,
       };
     });
+  };
+
+  const limparBuscaAnvisa = () => {
+    setBuscaAnvisa("");
+    setResultadosAnvisa([]);
+    setBuscaAnvisaFeita(false);
+  };
+
+  const buscarNoAnvisa = async () => {
+    const termo = buscaAnvisa.trim();
+
+    if (!termo) return;
+
+    try {
+      setBuscandoAnvisa(true);
+      const resultados = await buscarMedicamentosAnvisaPorNome(termo);
+      setResultadosAnvisa(resultados);
+      setBuscaAnvisaFeita(true);
+    } catch (error) {
+      console.error("Erro ao consultar medicamentosAnvisa:", error);
+      showAlert(
+        "Erro na consulta",
+        "Nao foi possivel consultar o Bulario sincronizado agora.",
+      );
+    } finally {
+      setBuscandoAnvisa(false);
+    }
+  };
+
+  const usarResultadoAnvisa = (medicamento: MedicamentoAnvisa) => {
+    setForm((prev) => ({
+      ...prev,
+      principioAtivo: medicamento.nomeProduto,
+      bulaUrl: getUrlBulaAnvisa(medicamento.numeroProcesso),
+    }));
+    limparBuscaAnvisa();
   };
 
   const editarProduto = (produto: ProdutoFirestore) => {
@@ -1057,6 +1110,72 @@ export default function AdminProdutosScreen() {
 
             {form.isMedicamento ? (
               <>
+                <View style={styles.anvisaBuscaBox}>
+                  <Text style={styles.label}>Consultar Bulario ANVISA</Text>
+                  <Text style={styles.estoqueFormAjuda}>
+                    Busque pelo nome e escolha um resultado pra preencher o
+                    principio ativo e o link da bula sozinhos.
+                  </Text>
+
+                  <View style={styles.tamanhoInputLinha}>
+                    <TextInput
+                      style={[styles.input, styles.tamanhoInput]}
+                      value={buscaAnvisa}
+                      onChangeText={setBuscaAnvisa}
+                      onSubmitEditing={buscarNoAnvisa}
+                      placeholder="Ex.: Dipirona Monoidratada"
+                      placeholderTextColor="#8a978f"
+                      returnKeyType="search"
+                    />
+                    <TouchableOpacity
+                      style={styles.tamanhoAdicionarBotao}
+                      onPress={buscarNoAnvisa}
+                      activeOpacity={0.85}
+                      disabled={buscandoAnvisa}
+                    >
+                      {buscandoAnvisa ? (
+                        <ActivityIndicator size="small" color="#1b5e20" />
+                      ) : (
+                        <Ionicons name="search" size={20} color="#1b5e20" />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+
+                  {buscaAnvisaFeita && !buscandoAnvisa ? (
+                    resultadosAnvisa.length === 0 ? (
+                      <Text style={styles.avisoTexto}>
+                        Nada encontrado. A sincronizacao com a ANVISA pode
+                        ainda estar em andamento.
+                      </Text>
+                    ) : (
+                      <View style={styles.anvisaResultadosLista}>
+                        {resultadosAnvisa.map((medicamento) => (
+                          <TouchableOpacity
+                            key={medicamento.numeroProcesso}
+                            style={styles.anvisaResultadoLinha}
+                            onPress={() => usarResultadoAnvisa(medicamento)}
+                            activeOpacity={0.85}
+                          >
+                            <View style={styles.anvisaResultadoTextoArea}>
+                              <Text style={styles.anvisaResultadoNome}>
+                                {medicamento.nomeProduto}
+                              </Text>
+                              <Text style={styles.anvisaResultadoDetalhe}>
+                                {medicamento.empresa || "Empresa nao informada"}
+                              </Text>
+                            </View>
+                            <Ionicons
+                              name="checkmark-circle-outline"
+                              size={20}
+                              color="#1b5e20"
+                            />
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )
+                  ) : null}
+                </View>
+
                 <TextInput
                   style={styles.input}
                   value={form.principioAtivo}
@@ -2039,4 +2158,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   emptyTexto: { color: "#6b7280", fontSize: 14, marginTop: 10 },
+  anvisaBuscaBox: {
+    backgroundColor: "#f8faf8",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#edf2ee",
+    padding: 12,
+    marginBottom: 12,
+  },
+  anvisaResultadosLista: { gap: 6, marginTop: 10 },
+  anvisaResultadoLinha: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#edf2ee",
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  anvisaResultadoTextoArea: { flex: 1 },
+  anvisaResultadoNome: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#1f2937",
+  },
+  anvisaResultadoDetalhe: {
+    fontSize: 11,
+    color: "#6b7280",
+    marginTop: 2,
+  },
 });

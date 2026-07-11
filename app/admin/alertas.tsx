@@ -31,15 +31,9 @@ import {
 } from "@/services/alertasSanitarios";
 import {
   buscarMedicamentosAnvisaPorNome,
+  getUrlBulaAnvisa,
   type MedicamentoAnvisa,
 } from "@/services/anvisaBulario";
-
-const ANVISA_BULA_FUNCTION_URL =
-  "https://us-central1-farmaciasp-app.cloudfunctions.net/abrirBulaAnvisa";
-
-function getUrlBulaAnvisa(numeroProcesso: string) {
-  return `${ANVISA_BULA_FUNCTION_URL}?numeroProcesso=${numeroProcesso}`;
-}
 
 const alertaInicialForm = {
   id: "",
