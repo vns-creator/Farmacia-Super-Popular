@@ -110,6 +110,7 @@ export default function AdminUsuariosScreen() {
 
   const renderUsuario = ({ item }: { item: UsuarioAdmin }) => {
     const atualizando = atualizandoId === item.id;
+    const ehCliente = (item.perfil || "cliente") === "cliente";
 
     return (
       <View style={styles.card}>
@@ -130,71 +131,79 @@ export default function AdminUsuariosScreen() {
           </View>
         </View>
 
-        <Text style={styles.label}>Filial</Text>
-        <View style={styles.perfis}>
-          {isAdminGeral && (
-            <TouchableOpacity
-              style={[
-                styles.perfilBotao,
-                item.adminGeral && styles.perfilBotaoAtivo,
-              ]}
-              disabled={atualizando}
-              onPress={() =>
-                atualizarUsuario(item, {
-                  adminGeral: true,
-                  filialId: null,
-                  filialNome: "Todas as filiais",
-                })
-              }
-              activeOpacity={0.85}
-            >
-              <Text
-                style={[
-                  styles.perfilBotaoTexto,
-                  item.adminGeral && styles.perfilBotaoTextoAtivo,
-                ]}
-              >
-                Geral
-              </Text>
-            </TouchableOpacity>
-          )}
-
-          {filiais.map((filial) => {
-            const ativo = item.filialId === filial.id && !item.adminGeral;
-
-            return (
-              <TouchableOpacity
-                key={filial.id}
-                style={[styles.perfilBotao, ativo && styles.perfilBotaoAtivo]}
-                disabled={atualizando || !isAdminGeral}
-                onPress={() =>
-                  atualizarUsuario(item, {
-                    adminGeral: false,
-                    filialId: filial.id,
-                    filialNome: filial.nome,
-                  })
-                }
-                activeOpacity={0.85}
-              >
-                <Text
+        {!ehCliente && (
+          <>
+            <Text style={styles.label}>Filial</Text>
+            <Text style={styles.ajudaFilial}>
+              Define qual painel administrativo esta pessoa gerencia. Nao se
+              aplica a clientes, que sempre veem produtos de todas as filiais.
+            </Text>
+            <View style={styles.perfis}>
+              {isAdminGeral && (
+                <TouchableOpacity
                   style={[
-                    styles.perfilBotaoTexto,
-                    ativo && styles.perfilBotaoTextoAtivo,
+                    styles.perfilBotao,
+                    item.adminGeral && styles.perfilBotaoAtivo,
                   ]}
+                  disabled={atualizando}
+                  onPress={() =>
+                    atualizarUsuario(item, {
+                      adminGeral: true,
+                      filialId: null,
+                      filialNome: "Todas as filiais",
+                    })
+                  }
+                  activeOpacity={0.85}
                 >
-                  {filial.nome}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+                  <Text
+                    style={[
+                      styles.perfilBotaoTexto,
+                      item.adminGeral && styles.perfilBotaoTextoAtivo,
+                    ]}
+                  >
+                    Geral
+                  </Text>
+                </TouchableOpacity>
+              )}
 
-        <Text style={styles.filialAtual}>
-          Atual:{" "}
-          {item.adminGeral
-            ? "Todas as filiais"
-            : getFilialById(item.filialId)?.nome || "Sem filial"}
-        </Text>
+              {filiais.map((filial) => {
+                const ativo = item.filialId === filial.id && !item.adminGeral;
+
+                return (
+                  <TouchableOpacity
+                    key={filial.id}
+                    style={[styles.perfilBotao, ativo && styles.perfilBotaoAtivo]}
+                    disabled={atualizando || !isAdminGeral}
+                    onPress={() =>
+                      atualizarUsuario(item, {
+                        adminGeral: false,
+                        filialId: filial.id,
+                        filialNome: filial.nome,
+                      })
+                    }
+                    activeOpacity={0.85}
+                  >
+                    <Text
+                      style={[
+                        styles.perfilBotaoTexto,
+                        ativo && styles.perfilBotaoTextoAtivo,
+                      ]}
+                    >
+                      {filial.nome}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <Text style={styles.filialAtual}>
+              Atual:{" "}
+              {item.adminGeral
+                ? "Todas as filiais"
+                : getFilialById(item.filialId)?.nome || "Sem filial"}
+            </Text>
+          </>
+        )}
 
         <Text style={styles.label}>Perfil</Text>
         <View style={styles.perfis}>
@@ -336,6 +345,14 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     marginTop: 14,
     marginBottom: 8,
+  },
+  ajudaFilial: {
+    color: "#6b7280",
+    fontSize: 12,
+    fontWeight: "600",
+    marginTop: -4,
+    marginBottom: 8,
+    lineHeight: 16,
   },
   perfis: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   perfilBotao: {
