@@ -35,6 +35,10 @@ const alertaInicialForm = {
   principioAtivo: "",
   mensagem: "",
   ativo: true,
+  alertas: [] as string[],
+  contraindicacoes: [] as string[],
+  revisado: false,
+  fonte: "",
 };
 
 export default function AdminAlertasScreen() {
@@ -45,6 +49,8 @@ export default function AdminAlertasScreen() {
     isAdminAtivo && (perfil?.adminGeral === true || !perfil?.filialId);
   const { alertas, loading } = useAlertasSanitarios();
   const [form, setForm] = useState(alertaInicialForm);
+  const [novoAlerta, setNovoAlerta] = useState("");
+  const [novaContraindicacao, setNovaContraindicacao] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [importando, setImportando] = useState(false);
   const [mensagemGeral, setMensagemGeral] = useState("");
@@ -68,7 +74,11 @@ export default function AdminAlertasScreen() {
     }
   }, [alertas]);
 
-  const limparForm = () => setForm(alertaInicialForm);
+  const limparForm = () => {
+    setForm(alertaInicialForm);
+    setNovoAlerta("");
+    setNovaContraindicacao("");
+  };
 
   const editarAlerta = (alerta: AlertaSanitario) => {
     setForm({
@@ -76,7 +86,58 @@ export default function AdminAlertasScreen() {
       principioAtivo: alerta.principioAtivo,
       mensagem: alerta.mensagem,
       ativo: alerta.ativo,
+      alertas: alerta.alertas || [],
+      contraindicacoes: alerta.contraindicacoes || [],
+      revisado: alerta.revisado === true,
+      fonte: alerta.fonte || "",
     });
+    setNovoAlerta("");
+    setNovaContraindicacao("");
+  };
+
+  const adicionarAlerta = () => {
+    const valor = novoAlerta.trim();
+    if (!valor) return;
+
+    setForm((prev) => {
+      if (prev.alertas.length >= 6) return prev;
+      if (prev.alertas.some((item) => item.toLowerCase() === valor.toLowerCase())) {
+        return prev;
+      }
+      return { ...prev, alertas: [...prev.alertas, valor] };
+    });
+    setNovoAlerta("");
+  };
+
+  const removerAlerta = (index: number) => {
+    setForm((prev) => ({
+      ...prev,
+      alertas: prev.alertas.filter((_, i) => i !== index),
+    }));
+  };
+
+  const adicionarContraindicacao = () => {
+    const valor = novaContraindicacao.trim();
+    if (!valor) return;
+
+    setForm((prev) => {
+      if (
+        prev.contraindicacoes.some(
+          (item) => item.toLowerCase() === valor.toLowerCase(),
+        )
+      ) {
+        return prev;
+      }
+      return { ...prev, contraindicacoes: [...prev.contraindicacoes, valor] };
+    });
+    setNovaContraindicacao("");
+  };
+
+  const removerContraindicacao = (index: number) => {
+    setForm((prev) => ({
+      ...prev,
+      contraindicacoes: prev.contraindicacoes.filter((_, i) => i !== index),
+    }));
   };
 
   const salvarAlerta = async () => {
@@ -90,10 +151,22 @@ export default function AdminAlertasScreen() {
       return;
     }
 
+    if (form.revisado && form.alertas.length === 0) {
+      showAlert(
+        "Adicione os alertas principais",
+        "Antes de marcar como revisado, cadastre pelo menos 1 alerta que sera exibido ao cliente na pagina de Medicamentos.",
+      );
+      return;
+    }
+
     const dados = {
       principioAtivo: form.principioAtivo.trim(),
       mensagem: form.mensagem.trim(),
       ativo: form.ativo,
+      alertas: form.alertas,
+      contraindicacoes: form.contraindicacoes,
+      revisado: form.revisado,
+      fonte: form.fonte.trim(),
       atualizadoEm: serverTimestamp(),
     };
 
@@ -194,6 +267,10 @@ export default function AdminAlertasScreen() {
             principioAtivo: alerta.principioAtivo,
             mensagem: alerta.mensagem,
             ativo: true,
+            alertas: alerta.alertas,
+            contraindicacoes: alerta.contraindicacoes,
+            revisado: alerta.revisado,
+            fonte: alerta.fonte,
             criadoEm: serverTimestamp(),
             atualizadoEm: serverTimestamp(),
           }),
@@ -245,6 +322,29 @@ export default function AdminAlertasScreen() {
                 {item.principioAtivo}
               </Text>
               <Text style={styles.alertaCardMensagem}>{item.mensagem}</Text>
+              <Text style={styles.alertaCardMensagem}>
+                {item.alertas.length} alerta(s) - {item.contraindicacoes.length}{" "}
+                contraindicacao(oes)
+              </Text>
+              <View
+                style={[
+                  styles.badgeRevisado,
+                  item.revisado
+                    ? styles.badgeRevisadoAtivo
+                    : styles.badgeRevisadoInativo,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.badgeRevisadoTexto,
+                    item.revisado
+                      ? styles.badgeRevisadoTextoAtivo
+                      : styles.badgeRevisadoTextoInativo,
+                  ]}
+                >
+                  {item.revisado ? "REVISADO" : "RASCUNHO"}
+                </Text>
+              </View>
             </View>
             <View style={styles.alertaCardAcoes}>
               <Chip
@@ -328,7 +428,7 @@ export default function AdminAlertasScreen() {
                   <Ionicons name="cloud-download-outline" size={18} color="#1f2937" />
                 )}
                 <Text style={styles.importarBotaoTexto}>
-                  Importar alerta de exemplo (Ibuprofeno)
+                  Importar rascunhos dos principais MIPs ({alertasIniciais.length})
                 </Text>
               </TouchableOpacity>
             ) : null}
@@ -344,7 +444,7 @@ export default function AdminAlertasScreen() {
               placeholderTextColor="#8a978f"
             />
 
-            <Text style={styles.label}>Mensagem do alerta</Text>
+            <Text style={styles.label}>Mensagem do alerta (exibida no carrinho)</Text>
             <TextInput
               style={[styles.input, styles.inputMultiline]}
               value={form.mensagem}
@@ -356,6 +456,85 @@ export default function AdminAlertasScreen() {
               multiline
             />
 
+            <Text style={styles.label}>
+              Alertas principais na pagina de Medicamentos ({form.alertas.length}/6)
+            </Text>
+            <Text style={styles.ajudaTexto}>
+              Cadastre de 3 a 6 alertas curtos. So sao exibidos ao cliente
+              quando a regra estiver marcada como revisada.
+            </Text>
+            <View style={styles.itemInputLinha}>
+              <TextInput
+                style={[styles.input, styles.itemInput]}
+                value={novoAlerta}
+                onChangeText={setNovoAlerta}
+                onSubmitEditing={adicionarAlerta}
+                placeholder="Ex.: Nao usar em caso de suspeita de dengue."
+                placeholderTextColor="#8a978f"
+                returnKeyType="done"
+              />
+              <TouchableOpacity
+                style={styles.itemAdicionarBotao}
+                onPress={adicionarAlerta}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="add" size={20} color="#1b5e20" />
+              </TouchableOpacity>
+            </View>
+            {form.alertas.length > 0 ? (
+              <View style={styles.itemLista}>
+                {form.alertas.map((alerta, index) => (
+                  <View key={`alerta-${index}`} style={styles.itemLinha}>
+                    <Text style={styles.itemTexto}>{alerta}</Text>
+                    <TouchableOpacity onPress={() => removerAlerta(index)}>
+                      <Ionicons name="close" size={16} color="#b91c1c" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+
+            <Text style={styles.label}>Contraindicacoes</Text>
+            <View style={styles.itemInputLinha}>
+              <TextInput
+                style={[styles.input, styles.itemInput]}
+                value={novaContraindicacao}
+                onChangeText={setNovaContraindicacao}
+                onSubmitEditing={adicionarContraindicacao}
+                placeholder="Ex.: Ulcera gastrica ativa."
+                placeholderTextColor="#8a978f"
+                returnKeyType="done"
+              />
+              <TouchableOpacity
+                style={styles.itemAdicionarBotao}
+                onPress={adicionarContraindicacao}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="add" size={20} color="#1b5e20" />
+              </TouchableOpacity>
+            </View>
+            {form.contraindicacoes.length > 0 ? (
+              <View style={styles.itemLista}>
+                {form.contraindicacoes.map((item, index) => (
+                  <View key={`contra-${index}`} style={styles.itemLinha}>
+                    <Text style={styles.itemTexto}>{item}</Text>
+                    <TouchableOpacity onPress={() => removerContraindicacao(index)}>
+                      <Ionicons name="close" size={16} color="#b91c1c" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+
+            <Text style={styles.label}>Fonte</Text>
+            <TextInput
+              style={styles.input}
+              value={form.fonte}
+              onChangeText={(fonte) => setForm((prev) => ({ ...prev, fonte }))}
+              placeholder="Ex.: Bulario Eletronico da ANVISA"
+              placeholderTextColor="#8a978f"
+            />
+
             <View style={styles.chips}>
               <Chip
                 label={form.ativo ? "Ativo" : "Inativo"}
@@ -364,7 +543,20 @@ export default function AdminAlertasScreen() {
                   setForm((prev) => ({ ...prev, ativo: !prev.ativo }))
                 }
               />
+              <Chip
+                label={form.revisado ? "Revisado" : "Rascunho"}
+                active={form.revisado}
+                onPress={() =>
+                  setForm((prev) => ({ ...prev, revisado: !prev.revisado }))
+                }
+              />
             </View>
+            {!form.revisado ? (
+              <Text style={styles.avisoTexto}>
+                Enquanto estiver como &quot;Rascunho&quot;, os alertas nao aparecem
+                para o cliente na pagina de Medicamentos.
+              </Text>
+            ) : null}
 
             <TouchableOpacity
               style={[styles.salvarBotao, salvando && styles.botaoDesativado]}
@@ -563,4 +755,44 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   emptyTexto: { color: "#6b7280", fontSize: 14, textAlign: "center" },
+  itemInputLinha: { flexDirection: "row", gap: 8, alignItems: "center" },
+  itemInput: { flex: 1 },
+  itemAdicionarBotao: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: "#e8f5e9",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  itemLista: { gap: 6, marginTop: 8 },
+  itemLinha: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    backgroundColor: "#f4f8f5",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  itemTexto: { flex: 1, fontSize: 12, color: "#374151", fontWeight: "600" },
+  avisoTexto: {
+    color: "#92400e",
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 6,
+  },
+  badgeRevisado: {
+    alignSelf: "flex-start",
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginTop: 6,
+  },
+  badgeRevisadoAtivo: { backgroundColor: "#e8f5e9" },
+  badgeRevisadoInativo: { backgroundColor: "#fef3c7" },
+  badgeRevisadoTexto: { fontSize: 10, fontWeight: "800" },
+  badgeRevisadoTextoAtivo: { color: "#1b5e20" },
+  badgeRevisadoTextoInativo: { color: "#92400e" },
 });

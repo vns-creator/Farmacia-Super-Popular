@@ -14,6 +14,10 @@ export type AlertaSanitario = {
   principioAtivo: string;
   mensagem: string;
   ativo: boolean;
+  alertas: string[];
+  contraindicacoes: string[];
+  revisado: boolean;
+  fonte?: string;
 };
 
 export function mapAlertaSanitario(
@@ -25,6 +29,16 @@ export function mapAlertaSanitario(
     principioAtivo: String(data.principioAtivo || ""),
     mensagem: String(data.mensagem || ""),
     ativo: data.ativo !== false,
+    alertas: Array.isArray(data.alertas)
+      ? data.alertas.filter((item: unknown) => typeof item === "string")
+      : [],
+    contraindicacoes: Array.isArray(data.contraindicacoes)
+      ? data.contraindicacoes.filter(
+          (item: unknown) => typeof item === "string",
+        )
+      : [],
+    revisado: data.revisado === true,
+    fonte: String(data.fonte || ""),
   };
 }
 
@@ -110,4 +124,29 @@ export function getAlertasParaItens(
   }
 
   return Array.from(mensagens);
+}
+
+export const ANVISA_BULARIO_URL = "https://consultas.anvisa.gov.br/#/bulario/";
+
+/**
+ * Retorna a regra especifica (ja revisada por um farmaceutico) cujo
+ * principioAtivo cadastrado esteja contido no principioAtivo do produto.
+ * Regras nao revisadas nao sao exibidas ao cliente.
+ */
+export function encontrarAlertaRevisado(
+  principioAtivoProduto: string | undefined,
+  alertas: AlertaSanitario[],
+) {
+  const principio = (principioAtivoProduto || "").toLowerCase().trim();
+
+  if (!principio) return undefined;
+
+  return alertas.find(
+    (alerta) =>
+      alerta.id !== ALERTA_GERAL_ID &&
+      alerta.ativo &&
+      alerta.revisado &&
+      alerta.principioAtivo.trim() &&
+      principio.includes(alerta.principioAtivo.toLowerCase().trim()),
+  );
 }

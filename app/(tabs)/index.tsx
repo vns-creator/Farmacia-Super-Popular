@@ -37,8 +37,6 @@ type HomeProduct = {
   controlarEstoque?: boolean;
   estoque?: number;
   estoqueMinimo?: number;
-  isMedicamento?: boolean;
-  principioAtivo?: string;
   temTamanhos?: boolean;
   tamanhos?: string[];
   estoquePorTamanho?: Record<string, number>;
@@ -53,9 +51,9 @@ const categorias = [
   },
   {
     id: "2",
-    nome: "Manipulados",
-    icon: "flask",
-    rota: "/manipulados",
+    nome: "Medicamentos",
+    icon: "medkit",
+    rota: "/medicamentos",
   },
   {
     id: "3",
@@ -169,14 +167,14 @@ const catalogoBusca = [
   {
     id: "busca-melatonina",
     nome: "Melatonina",
-    categoria: "Manipulados",
+    categoria: "Medicamentos",
     preco: 29.9,
     imagem: require("../../assets/images/melatonina.png"),
   },
   {
     id: "busca-omega3",
     nome: "Omega 3",
-    categoria: "Manipulados",
+    categoria: "Medicamentos",
     preco: 34.9,
     imagem: require("../../assets/images/omega3manipulado.png"),
   },
@@ -224,8 +222,6 @@ export default function HomeScreen() {
             controlarEstoque: produto.controlarEstoque,
             estoque: produto.estoque,
             estoqueMinimo: produto.estoqueMinimo,
-            isMedicamento: produto.isMedicamento,
-            principioAtivo: produto.principioAtivo,
             temTamanhos: produto.temTamanhos,
             tamanhos: produto.tamanhos,
             estoquePorTamanho: produto.estoquePorTamanho,
@@ -251,8 +247,6 @@ export default function HomeScreen() {
           controlarEstoque: produto.controlarEstoque,
           estoque: produto.estoque,
           estoqueMinimo: produto.estoqueMinimo,
-          isMedicamento: produto.isMedicamento,
-          principioAtivo: produto.principioAtivo,
           temTamanhos: produto.temTamanhos,
           tamanhos: produto.tamanhos,
           estoquePorTamanho: produto.estoquePorTamanho,

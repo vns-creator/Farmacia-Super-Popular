@@ -35,20 +35,20 @@ export const produtosIniciais: ProdutoInicial[] = [
   },
   {
     nome: "Melatonina 3mg",
-    categoria: "manipulados",
+    categoria: "medicamentos",
     preco: 39.9,
     descricao: "Formula preparada com cuidado",
     destaque: true,
   },
   {
     nome: "Biotina 5mg",
-    categoria: "manipulados",
+    categoria: "medicamentos",
     preco: 42.9,
     descricao: "Formula manipulada",
   },
   {
     nome: "Omega 3 Manipulado",
-    categoria: "manipulados",
+    categoria: "medicamentos",
     preco: 46.9,
     descricao: "Formula manipulada",
   },

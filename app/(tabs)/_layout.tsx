@@ -58,7 +58,7 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen name="ofertas" options={{ href: null }} />
-      <Tabs.Screen name="manipulados" options={{ href: null }} />
+      <Tabs.Screen name="medicamentos" options={{ href: null }} />
       <Tabs.Screen name="perfumaria" options={{ href: null }} />
       <Tabs.Screen name="higiene" options={{ href: null }} />
       <Tabs.Screen name="baby" options={{ href: null }} />

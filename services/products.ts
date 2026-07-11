@@ -13,7 +13,7 @@ import {
 
 export type CategoriaProduto =
   | "ofertas"
-  | "manipulados"
+  | "medicamentos"
   | "perfumaria"
   | "higiene"
   | "baby";
@@ -41,6 +41,8 @@ export type ProdutoFirestore = {
   temTamanhos?: boolean;
   tamanhos?: string[];
   estoquePorTamanho?: Record<string, number>;
+  pmc?: number;
+  bulaUrl?: string;
 };
 
 type ProductFilters = {
@@ -52,7 +54,7 @@ type ProductFilters = {
 
 const categoriaLabels: Record<CategoriaProduto, string> = {
   ofertas: "Ofertas",
-  manipulados: "Manipulados",
+  medicamentos: "Medicamentos",
   perfumaria: "Perfumaria",
   higiene: "Higiene",
   baby: "Baby",
@@ -106,6 +108,8 @@ export function mapProdutoFirestore(
             ]),
           )
         : {},
+    pmc: data.pmc ? Number(data.pmc) : undefined,
+    bulaUrl: String(data.bulaUrl || ""),
   };
 }
 

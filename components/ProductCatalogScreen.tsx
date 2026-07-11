@@ -32,8 +32,6 @@ export type CatalogProduct = {
   controlarEstoque?: boolean;
   estoque?: number;
   estoqueMinimo?: number;
-  isMedicamento?: boolean;
-  principioAtivo?: string;
   temTamanhos?: boolean;
   tamanhos?: string[];
   estoquePorTamanho?: Record<string, number>;
@@ -556,6 +554,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: "#1f2937",
     marginBottom: 8,
+    textAlign: "center",
   },
 
   vazioTexto: {

@@ -233,7 +233,7 @@ service cloud.firestore {
         && request.resource.data.nome is string
         && request.resource.data.categoria in [
           "ofertas",
-          "manipulados",
+          "medicamentos",
           "perfumaria",
           "higiene",
           "baby"

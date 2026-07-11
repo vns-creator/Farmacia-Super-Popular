@@ -58,8 +58,6 @@ export function FirestoreCatalogScreen({
       controlarEstoque: produto.controlarEstoque,
       estoque: produto.estoque,
       estoqueMinimo: produto.estoqueMinimo,
-      isMedicamento: produto.isMedicamento,
-      principioAtivo: produto.principioAtivo,
       temTamanhos: produto.temTamanhos,
       tamanhos: produto.tamanhos,
       estoquePorTamanho: produto.estoquePorTamanho,

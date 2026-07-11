@@ -46,7 +46,7 @@ import {
 
 const categorias: CategoriaProduto[] = [
   "ofertas",
-  "manipulados",
+  "medicamentos",
   "perfumaria",
   "higiene",
   "baby",
@@ -87,6 +87,8 @@ const produtoInicial = {
   temTamanhos: false,
   tamanhos: [] as string[],
   estoquePorTamanho: {} as Record<string, string>,
+  pmc: "",
+  bulaUrl: "",
 };
 
 export default function AdminProdutosScreen() {
@@ -259,16 +261,23 @@ export default function AdminProdutosScreen() {
   };
 
   const limparForm = () => {
+    const isMedicamento = abaSelecionada === "medicamentos";
     setForm({
       ...produtoInicial,
-      isMedicamento: abaSelecionada === "medicamentos",
+      isMedicamento,
+      categoria: isMedicamento ? "medicamentos" : produtoInicial.categoria,
     });
     setNovoTamanho("");
   };
 
   const selecionarAba = (aba: AbaProdutos) => {
+    const isMedicamento = aba === "medicamentos";
     setAbaSelecionada(aba);
-    setForm({ ...produtoInicial, isMedicamento: aba === "medicamentos" });
+    setForm({
+      ...produtoInicial,
+      isMedicamento,
+      categoria: isMedicamento ? "medicamentos" : produtoInicial.categoria,
+    });
     setNovoTamanho("");
   };
 
@@ -335,6 +344,8 @@ export default function AdminProdutosScreen() {
           String(produto.estoquePorTamanho?.[tamanho] ?? 0),
         ]),
       ),
+      pmc: produto.pmc ? String(produto.pmc).replace(".", ",") : "",
+      bulaUrl: produto.bulaUrl || "",
     });
     setNovoTamanho("");
   };
@@ -343,6 +354,7 @@ export default function AdminProdutosScreen() {
     const preco = parseNumeroDecimal(form.preco);
     const estoque = parseNumeroDecimal(form.estoque);
     const estoqueMinimo = parseNumeroDecimal(form.estoqueMinimo);
+    const pmc = form.pmc.trim() ? parseNumeroDecimal(form.pmc) : null;
 
     if (!form.nome.trim()) {
       showAlert("Informe o nome", "Digite o nome do produto.");
@@ -367,6 +379,11 @@ export default function AdminProdutosScreen() {
         "Informe o principio ativo",
         "Medicamentos precisam do principio ativo cadastrado.",
       );
+      return;
+    }
+
+    if (form.pmc.trim() && (pmc === null || Number.isNaN(pmc) || pmc <= 0)) {
+      showAlert("PMC invalido", "Digite um valor de PMC maior que zero.");
       return;
     }
 
@@ -427,10 +444,12 @@ export default function AdminProdutosScreen() {
       filialIds: filialIdsSelecionadas,
     });
 
+    const categoria = form.isMedicamento ? "medicamentos" : form.categoria;
+
     const dados = {
       nome: form.nome.trim(),
-      categoria: form.categoria,
-      categoriaLabel: getCategoriaLabel(form.categoria),
+      categoria,
+      categoriaLabel: getCategoriaLabel(categoria),
       preco,
       descricao: form.descricao.trim(),
       imagemUrl: form.imagemUrl.trim(),
@@ -445,6 +464,8 @@ export default function AdminProdutosScreen() {
       estoqueMinimo: form.controlarEstoque ? estoqueMinimo : 0,
       isMedicamento: form.isMedicamento,
       principioAtivo: form.isMedicamento ? form.principioAtivo.trim() : "",
+      pmc: form.isMedicamento && pmc !== null ? pmc : null,
+      bulaUrl: form.isMedicamento ? form.bulaUrl.trim() : "",
       codigoBarras: form.codigoBarras.trim(),
       temTamanhos: form.temTamanhos,
       tamanhos: form.temTamanhos ? form.tamanhos : [],
@@ -550,6 +571,8 @@ export default function AdminProdutosScreen() {
         estoqueMinimo: Number(produto.estoqueMinimo || 0),
         isMedicamento: produto.isMedicamento === true,
         principioAtivo: produto.principioAtivo || "",
+        pmc: produto.pmc ?? null,
+        bulaUrl: produto.bulaUrl || "",
         temTamanhos: produto.temTamanhos === true,
         tamanhos: produto.tamanhos || [],
         estoquePorTamanho: produto.estoquePorTamanho || {},
@@ -694,9 +717,21 @@ export default function AdminProdutosScreen() {
               {getCategoriaLabel(item.categoria)} - {formatarMoeda(item.preco)}
             </Text>
             {item.isMedicamento ? (
-              <Text style={styles.produtoPrincipioAtivo}>
-                Principio ativo: {item.principioAtivo || "Nao informado"}
-              </Text>
+              <>
+                <Text style={styles.produtoPrincipioAtivo}>
+                  Principio ativo: {item.principioAtivo || "Nao informado"}
+                </Text>
+                {item.pmc ? (
+                  <Text style={styles.produtoCodigoBarras}>
+                    PMC: {formatarMoeda(item.pmc)}
+                  </Text>
+                ) : null}
+                {item.bulaUrl ? (
+                  <Text style={styles.produtoCodigoBarras}>
+                    Bula cadastrada
+                  </Text>
+                ) : null}
+              </>
             ) : null}
             {item.codigoBarras ? (
               <Text style={styles.produtoCodigoBarras}>
@@ -1021,15 +1056,37 @@ export default function AdminProdutosScreen() {
             />
 
             {form.isMedicamento ? (
-              <TextInput
-                style={styles.input}
-                value={form.principioAtivo}
-                onChangeText={(principioAtivo) =>
-                  setForm((prev) => ({ ...prev, principioAtivo }))
-                }
-                placeholder="Principio ativo"
-                placeholderTextColor="#8a978f"
-              />
+              <>
+                <TextInput
+                  style={styles.input}
+                  value={form.principioAtivo}
+                  onChangeText={(principioAtivo) =>
+                    setForm((prev) => ({ ...prev, principioAtivo }))
+                  }
+                  placeholder="Principio ativo"
+                  placeholderTextColor="#8a978f"
+                />
+
+                <TextInput
+                  style={styles.input}
+                  value={form.pmc}
+                  onChangeText={(pmc) => setForm((prev) => ({ ...prev, pmc }))}
+                  keyboardType="decimal-pad"
+                  placeholder="PMC (preco de tabela, opcional)"
+                  placeholderTextColor="#8a978f"
+                />
+
+                <TextInput
+                  style={styles.input}
+                  value={form.bulaUrl}
+                  onChangeText={(bulaUrl) =>
+                    setForm((prev) => ({ ...prev, bulaUrl }))
+                  }
+                  placeholder="Link da bula (URL, opcional)"
+                  placeholderTextColor="#8a978f"
+                  autoCapitalize="none"
+                />
+              </>
             ) : null}
 
             <TextInput
@@ -1236,36 +1293,48 @@ export default function AdminProdutosScreen() {
               ) : null}
             </View>
 
-            <Text style={styles.label}>Categoria</Text>
-            <View style={styles.categorias}>
-              {categorias.map((categoria) => {
-                const active = form.categoria === categoria;
+            {form.isMedicamento ? (
+              <View style={styles.filialTravada}>
+                <Ionicons name="medkit-outline" size={18} color="#1b5e20" />
+                <Text style={styles.filialTravadaTexto}>
+                  Medicamentos aparecem automaticamente na pagina Medicamentos.
+                  Use os chips abaixo para tambem colocar em Oferta ou Destaque.
+                </Text>
+              </View>
+            ) : (
+              <>
+                <Text style={styles.label}>Categoria</Text>
+                <View style={styles.categorias}>
+                  {categorias.map((categoria) => {
+                    const active = form.categoria === categoria;
 
-                return (
-                  <TouchableOpacity
-                    key={categoria}
-                    style={[styles.categoriaBotao, active && styles.categoriaBotaoAtivo]}
-                    onPress={() =>
-                      setForm((prev) => ({
-                        ...prev,
-                        categoria,
-                        emOferta: categoria === "ofertas" ? true : prev.emOferta,
-                      }))
-                    }
-                    activeOpacity={0.85}
-                  >
-                    <Text
-                      style={[
-                        styles.categoriaBotaoTexto,
-                        active && styles.categoriaBotaoTextoAtivo,
-                      ]}
-                    >
-                      {getCategoriaLabel(categoria)}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+                    return (
+                      <TouchableOpacity
+                        key={categoria}
+                        style={[styles.categoriaBotao, active && styles.categoriaBotaoAtivo]}
+                        onPress={() =>
+                          setForm((prev) => ({
+                            ...prev,
+                            categoria,
+                            emOferta: categoria === "ofertas" ? true : prev.emOferta,
+                          }))
+                        }
+                        activeOpacity={0.85}
+                      >
+                        <Text
+                          style={[
+                            styles.categoriaBotaoTexto,
+                            active && styles.categoriaBotaoTextoAtivo,
+                          ]}
+                        >
+                          {getCategoriaLabel(categoria)}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </>
+            )}
 
             <Text style={styles.label}>Filiais que possuem o produto</Text>
             {isAdminGeral ? (
