@@ -46,7 +46,7 @@ export default function CarrinhoScreen() {
       controlaEstoque && obterQuantidadeTotal(item.id) >= estoqueDisponivel;
     const imagemSource = item.imagemUrl
       ? { uri: item.imagemUrl }
-      : item.imagem || require("../../assets/images/logo.png");
+      : require("../../assets/images/logo.png");
 
     return (
       <View style={styles.card}>

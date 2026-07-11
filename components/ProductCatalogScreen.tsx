@@ -4,7 +4,6 @@ import React, { useMemo, useState } from "react";
 import {
   FlatList,
   Image,
-  type ImageSourcePropType,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -23,7 +22,6 @@ export type CatalogProduct = {
   nome: string;
   categoria: string;
   preco: number;
-  imagem?: ImageSourcePropType;
   imagemUrl?: string;
   descricao?: string;
   filialId?: string | null;
@@ -101,7 +99,7 @@ export function ProductCatalogScreen({
     const atingiuEstoque = controlaEstoque && quantidade >= estoqueDisponivel;
     const imagemSource = item.imagemUrl
       ? { uri: item.imagemUrl }
-      : item.imagem || require("../assets/images/logo.png");
+      : require("../assets/images/logo.png");
 
     return (
       <View style={styles.cardProduto}>

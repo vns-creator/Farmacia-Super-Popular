@@ -1,13 +1,11 @@
 // context/CarContext.tsx
 
 import React, { createContext, ReactNode, useContext, useState } from "react";
-import type { ImageSourcePropType } from "react-native";
 
 export type Produto = {
   id: string;
   nome: string;
   preco: number;
-  imagem?: ImageSourcePropType;
   imagemUrl?: string;
   categoria?: string;
   descricao?: string;
