@@ -130,7 +130,7 @@ export function ProductCatalogScreen({
 
         {controlaEstoque ? (
           <Text style={[styles.estoqueTexto, semEstoque && styles.estoqueZerado]}>
-            {semEstoque ? "Indisponivel" : `${estoqueDisponivel} em estoque`}
+            {semEstoque ? "Indisponível" : `${estoqueDisponivel} em estoque`}
           </Text>
         ) : null}
 

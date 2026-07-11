@@ -188,20 +188,20 @@ export default function AdminPedidosScreen() {
     const telefone = (pedido.cliente?.telefone || "").replace(/\D/g, "");
 
     if (!telefone) {
-      showAlert("Telefone nao informado", "Este pedido nao possui telefone.");
+      showAlert("Telefone não informado", "Este pedido não possui telefone.");
       return;
     }
 
     const telefoneComDdd = telefone.startsWith("55") ? telefone : `55${telefone}`;
     const codigo = pedido.codigoPedido || pedido.id;
     const mensagem = encodeURIComponent(
-      `Ola, aqui e da farmacia. Estamos falando sobre o pedido ${codigo}.`,
+      `Olá, aqui é da farmácia. Estamos falando sobre o pedido ${codigo}.`,
     );
 
     try {
       await Linking.openURL(`https://wa.me/${telefoneComDdd}?text=${mensagem}`);
     } catch {
-      showAlert("Erro", "Nao foi possivel abrir o WhatsApp.");
+      showAlert("Erro", "Não foi possível abrir o WhatsApp.");
     }
   };
 
@@ -209,14 +209,14 @@ export default function AdminPedidosScreen() {
     const link = pedido.pagamentoOnline?.linkPagamento;
 
     if (!link) {
-      showAlert("Pagamento sem link", "Gere a cobranca online primeiro.");
+      showAlert("Pagamento sem link", "Gere a cobrança online primeiro.");
       return;
     }
 
     try {
       await Linking.openURL(link);
     } catch {
-      showAlert("Erro", "Nao foi possivel abrir o link de pagamento.");
+      showAlert("Erro", "Não foi possível abrir o link de pagamento.");
     }
   };
 
@@ -226,7 +226,7 @@ export default function AdminPedidosScreen() {
     );
 
     if (metodo !== formasPagamento.pix && metodo !== formasPagamento.cartaoOnline) {
-      showAlert("Forma de pagamento", "Este pedido nao usa Pix ou cartao online.");
+      showAlert("Forma de pagamento", "Este pedido não usa Pix ou cartão online.");
       return;
     }
 
@@ -249,10 +249,10 @@ export default function AdminPedidosScreen() {
         await Linking.openURL(linkPagamento);
       }
 
-      showAlert("Pagamento gerado", "A cobranca online foi atualizada no pedido.");
+      showAlert("Pagamento gerado", "A cobrança online foi atualizada no pedido.");
     } catch (error: any) {
       console.error("Erro ao gerar pagamento online:", error);
-      showAlert("Erro", error?.message || "Nao foi possivel gerar a cobranca.");
+      showAlert("Erro", error?.message || "Não foi possível gerar a cobrança.");
     } finally {
       setGerandoPagamentoId(null);
     }
@@ -262,7 +262,7 @@ export default function AdminPedidosScreen() {
     const telefone = (pedido.cliente?.telefone || "").replace(/\D/g, "");
 
     if (!telefone) {
-      showAlert("Telefone nao informado", "Este pedido nao possui telefone.");
+      showAlert("Telefone não informado", "Este pedido não possui telefone.");
       return;
     }
 
@@ -270,7 +270,7 @@ export default function AdminPedidosScreen() {
     const copiaECola = pedido.pagamentoOnline?.copiaECola;
 
     if (!link && !copiaECola) {
-      showAlert("Pagamento nao gerado", "Gere a cobranca online antes de enviar.");
+      showAlert("Pagamento não gerado", "Gere a cobrança online antes de enviar.");
       return;
     }
 
@@ -278,9 +278,9 @@ export default function AdminPedidosScreen() {
     const codigo = pedido.codigoPedido || pedido.id;
     const mensagem = encodeURIComponent(
       [
-        `Ola, aqui e da farmacia. Segue o pagamento do pedido ${codigo}.`,
+        `Olá, aqui é da farmácia. Segue o pagamento do pedido ${codigo}.`,
         link ? `Link: ${link}` : "",
-        copiaECola ? `Pix copia e cola: ${copiaECola}` : "",
+        copiaECola ? `Pix cópia e cola: ${copiaECola}` : "",
       ]
         .filter(Boolean)
         .join("\n\n"),
@@ -289,7 +289,7 @@ export default function AdminPedidosScreen() {
     try {
       await Linking.openURL(`https://wa.me/${telefoneComDdd}?text=${mensagem}`);
     } catch {
-      showAlert("Erro", "Nao foi possivel abrir o WhatsApp.");
+      showAlert("Erro", "Não foi possível abrir o WhatsApp.");
     }
   };
 
@@ -337,7 +337,7 @@ export default function AdminPedidosScreen() {
       },
       (error) => {
         console.error("Erro ao acompanhar pedidos admin:", error);
-        showAlert("Erro", "Nao foi possivel acompanhar os pedidos.");
+        showAlert("Erro", "Não foi possível acompanhar os pedidos.");
         setLoading(false);
       },
     );
@@ -395,8 +395,8 @@ export default function AdminPedidosScreen() {
 
       if (dados.entregadorId) {
         await criarNotificacao({
-          titulo: "Nova entrega atribuida",
-          mensagem: `${pedidoAtual?.codigoPedido || pedidoId} foi atribuido para voce.`,
+          titulo: "Nova entrega atribuída",
+          mensagem: `${pedidoAtual?.codigoPedido || pedidoId} foi atribuído para você.`,
           pedidoId,
           userUid: dados.entregadorId,
         });
@@ -516,7 +516,7 @@ export default function AdminPedidosScreen() {
         </View>
 
         <Text style={styles.filialTexto}>
-          {item.filialNome || "Filial nao informada"}
+          {item.filialNome || "Filial não informada"}
         </Text>
 
         <Text style={styles.local}>{local}</Text>
@@ -589,7 +589,7 @@ export default function AdminPedidosScreen() {
               >
                 <Ionicons name="card-outline" size={16} color="#1f2937" />
                 <Text style={styles.botaoPagamentoTexto}>
-                  {pagamentoOnline?.linkPagamento ? "Abrir pagamento" : "Gerar cobranca"}
+                  {pagamentoOnline?.linkPagamento ? "Abrir pagamento" : "Gerar cobrança"}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -605,14 +605,14 @@ export default function AdminPedidosScreen() {
         </View>
 
         <View style={styles.secao}>
-          <Text style={styles.label}>Observacao interna</Text>
+          <Text style={styles.label}>Observação interna</Text>
           <TextInput
             style={styles.inputObservacao}
             value={observacoesInternas[item.id] ?? item.observacoesInternas ?? ""}
             onChangeText={(texto) =>
               setObservacoesInternas((prev) => ({ ...prev, [item.id]: texto }))
             }
-            placeholder="Ex: separar item no balcao"
+            placeholder="Ex: separar item no balcão"
             placeholderTextColor="#8a978f"
             multiline
           />
@@ -621,7 +621,7 @@ export default function AdminPedidosScreen() {
             onPress={() => salvarObservacaoInterna(item)}
             activeOpacity={0.88}
           >
-            <Text style={styles.botaoSalvarObservacaoTexto}>Salvar observacao</Text>
+            <Text style={styles.botaoSalvarObservacaoTexto}>Salvar observação</Text>
           </TouchableOpacity>
         </View>
 
@@ -828,7 +828,7 @@ export default function AdminPedidosScreen() {
         </View>
 
         <Text style={styles.resultadoTexto}>
-          {pedidosVisiveis.length} pedido(s) nesta visao
+          {pedidosVisiveis.length} pedido(s) nesta visão
         </Text>
       </View>
 

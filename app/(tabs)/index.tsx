@@ -124,7 +124,7 @@ const catalogoBusca = [
   },
   {
     id: "busca-sabonete",
-    nome: "Sabonete Liquido",
+    nome: "Sabonete Líquido",
     categoria: "Higiene",
     preco: 14.9,
     imagem: require("../../assets/images/saboneteliquido.png"),
@@ -159,7 +159,7 @@ const catalogoBusca = [
   },
   {
     id: "busca-lenco",
-    nome: "Lenco Umedecido",
+    nome: "Lenço Umedecido",
     categoria: "Baby",
     preco: 11.9,
     imagem: require("../../assets/images/lencoumedecido.png"),
@@ -173,7 +173,7 @@ const catalogoBusca = [
   },
   {
     id: "busca-omega3",
-    nome: "Omega 3",
+    nome: "Ômega 3",
     categoria: "Medicamentos",
     preco: 34.9,
     imagem: require("../../assets/images/omega3manipulado.png"),
@@ -312,7 +312,7 @@ export default function HomeScreen() {
 
         {controlaEstoque ? (
           <Text style={[styles.estoqueTexto, semEstoque && styles.estoqueZerado]}>
-            {semEstoque ? "Indisponivel" : `${estoqueDisponivel} em estoque`}
+            {semEstoque ? "Indisponível" : `${estoqueDisponivel} em estoque`}
           </Text>
         ) : null}
 

@@ -146,7 +146,7 @@ export function MedicamentosCatalogScreen() {
             <Text
               style={[styles.estoqueTexto, semEstoque && styles.estoqueZerado]}
             >
-              {semEstoque ? "Indisponivel" : `${estoqueDisponivel} em estoque`}
+              {semEstoque ? "Indisponível" : `${estoqueDisponivel} em estoque`}
             </Text>
           ) : null}
 
@@ -154,7 +154,7 @@ export function MedicamentosCatalogScreen() {
             <View style={styles.alertaMedicamentoBox}>
               <View style={styles.alertaMedicamentoTopo}>
                 <Ionicons name="warning-outline" size={14} color="#92400e" />
-                <Text style={styles.alertaMedicamentoTitulo}>Atencao</Text>
+                <Text style={styles.alertaMedicamentoTitulo}>Atenção</Text>
               </View>
               {linhasAlerta.map((linha, index) => (
                 <Text key={index} style={styles.alertaMedicamentoTexto}>

@@ -126,7 +126,7 @@ export default function ContaScreen() {
           onPress={() => router.push("/notificacoes")}
           activeOpacity={0.9}
         >
-          <Text style={styles.botaoSecundarioTexto}>Notificacoes</Text>
+          <Text style={styles.botaoSecundarioTexto}>Notificações</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -134,7 +134,7 @@ export default function ContaScreen() {
           onPress={() => router.push("/farmacia")}
           activeOpacity={0.9}
         >
-          <Text style={styles.botaoSecundarioTexto}>Dados da farmacia</Text>
+          <Text style={styles.botaoSecundarioTexto}>Dados da farmácia</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -150,7 +150,7 @@ export default function ContaScreen() {
           onPress={() => router.push("/privacidade" as any)}
           activeOpacity={0.9}
         >
-          <Text style={styles.botaoSecundarioTexto}>Politica de privacidade</Text>
+          <Text style={styles.botaoSecundarioTexto}>Política de privacidade</Text>
         </TouchableOpacity>
 
         {isAdminAtivo && (
@@ -168,7 +168,7 @@ export default function ContaScreen() {
               onPress={() => router.push("/admin/pedidos")}
               activeOpacity={0.9}
             >
-              <Text style={styles.botaoSecundarioTexto}>Painel da farmacia</Text>
+              <Text style={styles.botaoSecundarioTexto}>Painel da farmácia</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -176,7 +176,7 @@ export default function ContaScreen() {
               onPress={() => router.push("/admin/relatorios")}
               activeOpacity={0.9}
             >
-              <Text style={styles.botaoSecundarioTexto}>Relatorios financeiros</Text>
+              <Text style={styles.botaoSecundarioTexto}>Relatórios financeiros</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -184,7 +184,7 @@ export default function ContaScreen() {
               onPress={() => router.push("/admin/usuarios")}
               activeOpacity={0.9}
             >
-              <Text style={styles.botaoSecundarioTexto}>Gerenciar usuarios</Text>
+              <Text style={styles.botaoSecundarioTexto}>Gerenciar usuários</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -201,7 +201,7 @@ export default function ContaScreen() {
                 onPress={() => router.push("/admin/alertas")}
                 activeOpacity={0.9}
               >
-                <Text style={styles.botaoSecundarioTexto}>Alertas sanitarios</Text>
+                <Text style={styles.botaoSecundarioTexto}>Alertas sanitários</Text>
               </TouchableOpacity>
             )}
           </>

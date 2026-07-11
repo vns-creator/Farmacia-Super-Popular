@@ -17,7 +17,7 @@ export default function FarmaciaScreen() {
 
   const abrirWhatsApp = (whatsapp: string, destino: string) => {
     const mensagem = encodeURIComponent(
-      `Ola, gostaria de atendimento pelo WhatsApp ${destino}.`,
+      `Olá, gostaria de atendimento pelo WhatsApp ${destino}.`,
     );
 
     void Linking.openURL(`https://wa.me/${whatsapp}?text=${mensagem}`);
@@ -40,9 +40,9 @@ export default function FarmaciaScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.hero}>
           <Ionicons name="logo-whatsapp" size={34} color="#fff" />
-          <Text style={styles.heroTitulo}>Fale com a farmacia</Text>
+          <Text style={styles.heroTitulo}>Fale com a farmácia</Text>
           <Text style={styles.heroTexto}>
-            Escolha o atendimento central ou uma filial para tirar duvidas sobre
+            Escolha o atendimento central ou uma filial para tirar dúvidas sobre
             manipulados, receitas, disponibilidade e medicamentos controlados.
           </Text>
         </View>
@@ -51,17 +51,17 @@ export default function FarmaciaScreen() {
           <Text style={styles.cardTitulo}>Atendimento central</Text>
           <InfoLinha
             icon="medical-outline"
-            label="Farmacia"
+            label="Farmácia"
             value={farmaciaInfo.nome}
           />
           <InfoLinha
             icon="time-outline"
-            label="Horario"
+            label="Horário"
             value={farmaciaInfo.horario}
           />
           <InfoLinha icon="mail-outline" label="E-mail" value={farmaciaInfo.email} />
           <ContatoTelefone
-            nome="Central da farmacia"
+            nome="Central da farmácia"
             telefone={farmaciaInfo.telefone}
             whatsapp={farmaciaInfo.whatsapp}
             onLigar={ligar}
@@ -111,12 +111,12 @@ export default function FarmaciaScreen() {
               <View style={styles.filialDetalhes}>
                 <InfoLinha
                   icon="time-outline"
-                  label="Horario"
+                  label="Horário"
                   value={filial.horario}
                 />
                 <InfoLinha
                   icon="business-outline"
-                  label="Razao social"
+                  label="Razão social"
                   value={filial.razaoSocial}
                 />
                 <InfoLinha
@@ -126,7 +126,7 @@ export default function FarmaciaScreen() {
                 />
                 <InfoLinha
                   icon="medkit-outline"
-                  label="Responsavel tecnico"
+                  label="Responsável técnico"
                   value={filial.responsavelTecnico}
                 />
                 <InfoLinha
@@ -155,7 +155,7 @@ export default function FarmaciaScreen() {
             onPress={() => router.push("/privacidade" as any)}
             activeOpacity={0.85}
           >
-            <Text style={styles.documentoTexto}>Politica de privacidade</Text>
+            <Text style={styles.documentoTexto}>Política de privacidade</Text>
             <Ionicons name="chevron-forward" size={18} color="#1b5e20" />
           </TouchableOpacity>
         </View>

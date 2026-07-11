@@ -27,9 +27,9 @@ export default function PrivacidadeScreen() {
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.hero}>
-          <Text style={styles.heroTitulo}>Politica de Privacidade</Text>
+          <Text style={styles.heroTitulo}>Política de Privacidade</Text>
           <Text style={styles.heroTexto}>
-            {farmaciaInfo.nome} - ultima atualizacao:{" "}
+            {farmaciaInfo.nome} - última atualização:{" "}
             {legalInfo.ultimaAtualizacao}
           </Text>
         </View>

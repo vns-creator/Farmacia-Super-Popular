@@ -120,7 +120,7 @@ export default function AdminRelatoriosScreen() {
       },
       (error) => {
         console.error("Erro ao carregar relatorios:", error);
-        showAlert("Erro", "Nao foi possivel carregar os relatorios.");
+        showAlert("Erro", "Não foi possível carregar os relatórios.");
         setLoading(false);
       },
     );
@@ -277,7 +277,7 @@ export default function AdminRelatoriosScreen() {
           <Ionicons name="arrow-back" size={22} color="#1b5e20" />
         </TouchableOpacity>
         <View style={styles.headerTexto}>
-          <Text style={styles.titulo}>Relatorios</Text>
+          <Text style={styles.titulo}>Relatórios</Text>
           <Text style={styles.subtitulo}>Vendas, pagamentos e desempenho</Text>
         </View>
       </View>
@@ -289,7 +289,7 @@ export default function AdminRelatoriosScreen() {
       ) : (
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.filtros}>
-            <Text style={styles.label}>Periodo</Text>
+            <Text style={styles.label}>Período</Text>
             <View style={styles.chips}>
               {periodos.map((item) => {
                 const ativo = periodo === item.value;
@@ -337,11 +337,11 @@ export default function AdminRelatoriosScreen() {
                 {formatarMoeda(resumo.faturamento)}
               </Text>
               <Text style={styles.kpiAjuda}>
-                {resumo.pedidosValidos.length} pedido(s) validos
+                {resumo.pedidosValidos.length} pedido(s) válidos
               </Text>
             </View>
             <View style={styles.kpi}>
-              <Text style={styles.kpiLabel}>Ticket medio</Text>
+              <Text style={styles.kpiLabel}>Ticket médio</Text>
               <Text style={styles.kpiValor}>{formatarMoeda(resumo.ticketMedio)}</Text>
             </View>
             <View style={styles.kpi}>
@@ -387,7 +387,7 @@ export default function AdminRelatoriosScreen() {
                 </View>
               ))
             ) : (
-              <Text style={styles.vazio}>Nenhum pedido no periodo.</Text>
+              <Text style={styles.vazio}>Nenhum pedido no período.</Text>
             )}
           </View>
 
@@ -406,7 +406,7 @@ export default function AdminRelatoriosScreen() {
                 </View>
               ))
             ) : (
-              <Text style={styles.vazio}>Nenhum pedido no periodo.</Text>
+              <Text style={styles.vazio}>Nenhum pedido no período.</Text>
             )}
           </View>
 
@@ -422,7 +422,7 @@ export default function AdminRelatoriosScreen() {
                 </View>
               ))
             ) : (
-              <Text style={styles.vazio}>Nenhum pedido no periodo.</Text>
+              <Text style={styles.vazio}>Nenhum pedido no período.</Text>
             )}
           </View>
 
@@ -444,7 +444,7 @@ export default function AdminRelatoriosScreen() {
                 </View>
               ))
             ) : (
-              <Text style={styles.vazio}>Nenhum produto vendido no periodo.</Text>
+              <Text style={styles.vazio}>Nenhum produto vendido no período.</Text>
             )}
           </View>
         </ScrollView>

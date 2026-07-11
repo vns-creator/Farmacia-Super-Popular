@@ -25,7 +25,7 @@ export function ProductFilialAvailability({
   return (
     <View
       style={styles.container}
-      accessibilityLabel={`Produto disponivel em ${texto}`}
+      accessibilityLabel={`Produto disponível em ${texto}`}
     >
       <View style={styles.barra}>
         {filiais.map((filial) => {

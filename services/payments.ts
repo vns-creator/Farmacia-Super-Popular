@@ -101,7 +101,7 @@ export function prepararPagamentoOnline({
       copiaECola: null,
       linkPagamento: null,
       mensagem:
-        "Pagamento online preparado. Vincule a conta do provedor para ativar a cobranca automatica.",
+        "Pagamento online preparado. Vincule a conta do provedor para ativar a cobrança automática.",
     };
   }
 
@@ -114,7 +114,7 @@ export function prepararPagamentoOnline({
     qrCode: null,
     copiaECola: null,
     linkPagamento: null,
-    mensagem: "Pagamento criado e aguardando confirmacao do provedor.",
+    mensagem: "Pagamento criado e aguardando confirmação do provedor.",
   };
 }
 

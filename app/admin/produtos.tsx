@@ -148,7 +148,7 @@ export default function AdminProdutosScreen() {
       },
       (error) => {
         console.error("Erro ao acompanhar produtos:", error);
-        showAlert("Erro", "Nao foi possivel carregar os produtos.");
+        showAlert("Erro", "Não foi possível carregar os produtos.");
         setLoading(false);
       },
     );
@@ -233,8 +233,8 @@ export default function AdminProdutosScreen() {
 
       if (!permissao.granted) {
         showAlert(
-          "Permissao necessaria",
-          "Permita acesso as fotos para escolher a imagem do produto.",
+          "Permissão necessária",
+          "Permita acesso às fotos para escolher a imagem do produto.",
         );
         return;
       }
@@ -265,7 +265,7 @@ export default function AdminProdutosScreen() {
       setForm((prev) => ({ ...prev, imagemUrl: url }));
     } catch (error) {
       console.error("Erro ao enviar imagem:", error);
-      showAlert("Erro", "Nao foi possivel enviar a imagem.");
+      showAlert("Erro", "Não foi possível enviar a imagem.");
     } finally {
       setEnviandoImagem(false);
     }
@@ -353,7 +353,7 @@ export default function AdminProdutosScreen() {
       console.error("Erro ao consultar medicamentosAnvisa:", error);
       showAlert(
         "Erro na consulta",
-        "Nao foi possivel consultar o Bulario sincronizado agora.",
+        "Não foi possível consultar o Bulário sincronizado agora.",
       );
     } finally {
       setBuscandoAnvisa(false);
@@ -415,22 +415,22 @@ export default function AdminProdutosScreen() {
     }
 
     if (Number.isNaN(preco) || preco <= 0) {
-      showAlert("Preco invalido", "Digite um valor maior que zero.");
+      showAlert("Preço inválido", "Digite um valor maior que zero.");
       return;
     }
 
     if (!imagemUrlValida) {
       showAlert(
-        "URL invalida",
-        "Use um link completo da imagem, comecando com http:// ou https://.",
+        "URL inválida",
+        "Use um link completo da imagem, começando com http:// ou https://.",
       );
       return;
     }
 
     if (form.isMedicamento && !form.principioAtivo.trim()) {
       showAlert(
-        "Informe o principio ativo",
-        "Medicamentos precisam do principio ativo cadastrado.",
+        "Informe o princípio ativo",
+        "Medicamentos precisam do princípio ativo cadastrado.",
       );
       return;
     }
@@ -445,7 +445,7 @@ export default function AdminProdutosScreen() {
       !form.temTamanhos &&
       (!Number.isFinite(estoque) || estoque < 0 || !Number.isInteger(estoque))
     ) {
-      showAlert("Estoque invalido", "Informe uma quantidade inteira maior ou igual a zero.");
+      showAlert("Estoque inválido", "Informe uma quantidade inteira maior ou igual a zero.");
       return;
     }
 
@@ -456,8 +456,8 @@ export default function AdminProdutosScreen() {
         !Number.isInteger(estoqueMinimo))
     ) {
       showAlert(
-        "Estoque minimo invalido",
-        "Informe uma quantidade minima inteira maior ou igual a zero.",
+        "Estoque mínimo inválido",
+        "Informe uma quantidade mínima inteira maior ou igual a zero.",
       );
       return;
     }
@@ -476,8 +476,8 @@ export default function AdminProdutosScreen() {
           !Number.isInteger(valorTamanho)
         ) {
           showAlert(
-            "Estoque invalido",
-            `Informe uma quantidade inteira valida para o tamanho ${tamanho}.`,
+            "Estoque inválido",
+            `Informe uma quantidade inteira válida para o tamanho ${tamanho}.`,
           );
           return;
         }
@@ -544,7 +544,7 @@ export default function AdminProdutosScreen() {
       limparForm();
     } catch (error) {
       console.error("Erro ao salvar produto:", error);
-      showAlert("Erro", "Nao foi possivel salvar o produto.");
+      showAlert("Erro", "Não foi possível salvar o produto.");
     } finally {
       setSalvando(false);
     }
@@ -573,7 +573,7 @@ export default function AdminProdutosScreen() {
     if (campo === "ativo" && produto.ativo) {
       showAlert(
         "Desativar produto",
-        `${produto.nome} deixara de aparecer para os clientes. Deseja continuar?`,
+        `${produto.nome} deixará de aparecer para os clientes. Deseja continuar?`,
         [
           { text: "Cancelar", style: "cancel" },
           {
@@ -603,14 +603,14 @@ export default function AdminProdutosScreen() {
       });
     } catch (error) {
       console.error("Erro ao atualizar produto:", error);
-      showAlert("Erro", "Nao foi possivel atualizar o produto.");
+      showAlert("Erro", "Não foi possível atualizar o produto.");
     }
   };
 
   const duplicarProduto = async (produto: ProdutoFirestore) => {
     try {
       await addDoc(collection(db, "produtos"), {
-        nome: `${produto.nome} - copia`,
+        nome: `${produto.nome} - cópia`,
         categoria: produto.categoria,
         categoriaLabel: getCategoriaLabel(produto.categoria),
         preco: produto.preco,
@@ -635,10 +635,10 @@ export default function AdminProdutosScreen() {
         criadoEm: serverTimestamp(),
         atualizadoEm: serverTimestamp(),
       });
-      showAlert("Produto duplicado", "A copia foi criada como inativa.");
+      showAlert("Produto duplicado", "A cópia foi criada como inativa.");
     } catch (error) {
       console.error("Erro ao duplicar produto:", error);
-      showAlert("Erro", "Nao foi possivel duplicar o produto.");
+      showAlert("Erro", "Não foi possível duplicar o produto.");
     }
   };
 
@@ -651,14 +651,14 @@ export default function AdminProdutosScreen() {
       }
     } catch (error) {
       console.error("Erro ao excluir produto:", error);
-      showAlert("Erro", "Nao foi possivel excluir o produto.");
+      showAlert("Erro", "Não foi possível excluir o produto.");
     }
   };
 
   const excluirProduto = (produto: ProdutoFirestore) => {
     showAlert(
       "Excluir produto",
-      `${produto.nome} sera excluido permanentemente. Esta acao nao pode ser desfeita.`,
+      `${produto.nome} será excluído permanentemente. Esta ação não pode ser desfeita.`,
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -673,8 +673,8 @@ export default function AdminProdutosScreen() {
   const importarCatalogoInicial = async () => {
     if (produtos.length > 0) {
       showAlert(
-        "Catalogo ja possui produtos",
-        "A importacao inicial so fica disponivel quando nao ha produtos cadastrados.",
+        "Catálogo já possui produtos",
+        "A importação inicial só fica disponível quando não há produtos cadastrados.",
       );
       return;
     }
@@ -710,7 +710,7 @@ export default function AdminProdutosScreen() {
       );
     } catch (error) {
       console.error("Erro ao importar catalogo:", error);
-      showAlert("Erro", "Nao foi possivel importar o catalogo inicial.");
+      showAlert("Erro", "Não foi possível importar o catálogo inicial.");
     } finally {
       setImportando(false);
     }
@@ -728,7 +728,7 @@ export default function AdminProdutosScreen() {
       });
     } catch (error) {
       console.error("Erro ao ajustar estoque:", error);
-      showAlert("Erro", "Nao foi possivel ajustar o estoque.");
+      showAlert("Erro", "Não foi possível ajustar o estoque.");
     }
   };
 
@@ -748,7 +748,7 @@ export default function AdminProdutosScreen() {
       });
     } catch (error) {
       console.error("Erro ao ajustar estoque do tamanho:", error);
-      showAlert("Erro", "Nao foi possivel ajustar o estoque deste tamanho.");
+      showAlert("Erro", "Não foi possível ajustar o estoque deste tamanho.");
     }
   };
 
@@ -772,7 +772,7 @@ export default function AdminProdutosScreen() {
             {item.isMedicamento ? (
               <>
                 <Text style={styles.produtoPrincipioAtivo}>
-                  Principio ativo: {item.principioAtivo || "Nao informado"}
+                  Princípio ativo: {item.principioAtivo || "Não informado"}
                 </Text>
                 {item.pmc ? (
                   <Text style={styles.produtoCodigoBarras}>
@@ -890,7 +890,7 @@ export default function AdminProdutosScreen() {
               </Text>
               <Text style={styles.estoqueSubtitulo}>
                 {controlaEstoque
-                  ? `Minimo recomendado: ${estoqueMinimo}`
+                  ? `Mínimo recomendado: ${estoqueMinimo}`
                   : "Venda sem controle de quantidade"}
               </Text>
             </View>
@@ -1085,7 +1085,7 @@ export default function AdminProdutosScreen() {
                 setForm((prev) => ({ ...prev, codigoBarras }))
               }
               keyboardType="number-pad"
-              placeholder="Codigo de barras"
+              placeholder="Código de barras"
               placeholderTextColor="#8a978f"
             />
 
@@ -1094,7 +1094,7 @@ export default function AdminProdutosScreen() {
               value={form.preco}
               onChangeText={(preco) => setForm((prev) => ({ ...prev, preco }))}
               keyboardType="decimal-pad"
-              placeholder="Preco"
+              placeholder="Preço"
               placeholderTextColor="#8a978f"
             />
 
@@ -1104,7 +1104,7 @@ export default function AdminProdutosScreen() {
               onChangeText={(descricao) =>
                 setForm((prev) => ({ ...prev, descricao }))
               }
-              placeholder="Descricao curta"
+              placeholder="Descrição curta"
               placeholderTextColor="#8a978f"
             />
 
@@ -1114,7 +1114,7 @@ export default function AdminProdutosScreen() {
                   <Text style={styles.label}>Consultar Bulario ANVISA</Text>
                   <Text style={styles.estoqueFormAjuda}>
                     Busque pelo nome e escolha um resultado pra preencher o
-                    principio ativo e o link da bula sozinhos.
+                    princípio ativo e o link da bula sozinhos.
                   </Text>
 
                   <View style={styles.tamanhoInputLinha}>
@@ -1144,7 +1144,7 @@ export default function AdminProdutosScreen() {
                   {buscaAnvisaFeita && !buscandoAnvisa ? (
                     resultadosAnvisa.length === 0 ? (
                       <Text style={styles.avisoTexto}>
-                        Nada encontrado. A sincronizacao com a ANVISA pode
+                        Nada encontrado. A sincronização com a ANVISA pode
                         ainda estar em andamento.
                       </Text>
                     ) : (
@@ -1161,7 +1161,7 @@ export default function AdminProdutosScreen() {
                                 {medicamento.nomeProduto}
                               </Text>
                               <Text style={styles.anvisaResultadoDetalhe}>
-                                {medicamento.empresa || "Empresa nao informada"}
+                                {medicamento.empresa || "Empresa não informada"}
                               </Text>
                             </View>
                             <Ionicons
@@ -1182,7 +1182,7 @@ export default function AdminProdutosScreen() {
                   onChangeText={(principioAtivo) =>
                     setForm((prev) => ({ ...prev, principioAtivo }))
                   }
-                  placeholder="Principio ativo"
+                  placeholder="Princípio ativo"
                   placeholderTextColor="#8a978f"
                 />
 
@@ -1191,7 +1191,7 @@ export default function AdminProdutosScreen() {
                   value={form.pmc}
                   onChangeText={(pmc) => setForm((prev) => ({ ...prev, pmc }))}
                   keyboardType="decimal-pad"
-                  placeholder="PMC (preco de tabela, opcional)"
+                  placeholder="PMC (preço de tabela, opcional)"
                   placeholderTextColor="#8a978f"
                 />
 
@@ -1242,7 +1242,7 @@ export default function AdminProdutosScreen() {
 
             {!imagemUrlValida ? (
               <Text style={styles.avisoTexto}>
-                Use uma URL completa, comecando com http:// ou https://.
+                Use uma URL completa, começando com http:// ou https://.
               </Text>
             ) : null}
             {form.imagemUrl.trim() && imagemUrlValida ? (
@@ -1252,7 +1252,7 @@ export default function AdminProdutosScreen() {
                   style={styles.previewImagem}
                   resizeMode="contain"
                 />
-                <Text style={styles.previewTexto}>Previa da imagem</Text>
+                <Text style={styles.previewTexto}>Prévia da imagem</Text>
               </View>
             ) : null}
 
@@ -1280,7 +1280,7 @@ export default function AdminProdutosScreen() {
                 <>
                   {form.temTamanhos ? (
                     <Text style={styles.avisoTexto}>
-                      Este produto tem tamanhos - a quantidade e definida por
+                      Este produto tem tamanhos - a quantidade é definida por
                       tamanho, logo abaixo.
                     </Text>
                   ) : null}
@@ -1301,7 +1301,7 @@ export default function AdminProdutosScreen() {
                       </View>
                     )}
                     <View style={styles.estoqueInputGrupo}>
-                      <Text style={styles.inputLabel}>Alerta minimo</Text>
+                      <Text style={styles.inputLabel}>Alerta mínimo</Text>
                       <TextInput
                         style={styles.input}
                         value={form.estoqueMinimo}
@@ -1416,8 +1416,8 @@ export default function AdminProdutosScreen() {
               <View style={styles.filialTravada}>
                 <Ionicons name="medkit-outline" size={18} color="#1b5e20" />
                 <Text style={styles.filialTravadaTexto}>
-                  Medicamentos aparecem automaticamente na pagina Medicamentos.
-                  Use os chips abaixo para tambem colocar em Oferta ou Destaque.
+                  Medicamentos aparecem automaticamente na página Medicamentos.
+                  Use os chips abaixo para também colocar em Oferta ou Destaque.
                 </Text>
               </View>
             ) : (
@@ -1512,7 +1512,7 @@ export default function AdminProdutosScreen() {
                 <Ionicons name="storefront-outline" size={18} color="#1b5e20" />
                 <Text style={styles.filialTravadaTexto}>
                   {getFilialById(filialUsuarioId)?.nome ||
-                    "Vincule uma filial ao seu usuario"}
+                    "Vincule uma filial ao seu usuário"}
                 </Text>
               </View>
             )}
@@ -1551,13 +1551,13 @@ export default function AdminProdutosScreen() {
                 <Ionicons name="save-outline" size={18} color="#fff" />
               )}
               <Text style={styles.salvarBotaoTexto}>
-                {form.id ? "Salvar alteracoes" : "Adicionar produto"}
+                {form.id ? "Salvar alterações" : "Adicionar produto"}
               </Text>
             </TouchableOpacity>
 
             {form.id ? (
               <TouchableOpacity style={styles.cancelarBotao} onPress={limparForm}>
-                <Text style={styles.cancelarBotaoTexto}>Cancelar edicao</Text>
+                <Text style={styles.cancelarBotaoTexto}>Cancelar edição</Text>
               </TouchableOpacity>
             ) : null}
 

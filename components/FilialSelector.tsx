@@ -21,7 +21,7 @@ export function FilialSelector() {
     if (carrinho.length > 0) {
       showAlert(
         "Trocar filial",
-        "Ao trocar a filial, o carrinho sera limpo para evitar produtos indisponiveis.",
+        "Ao trocar a filial, o carrinho será limpo para evitar produtos indisponíveis.",
         [
           { text: "Cancelar", style: "cancel" },
           {
@@ -45,7 +45,7 @@ export function FilialSelector() {
       <View style={styles.topo}>
         <Ionicons name="storefront-outline" size={18} color="#1b5e20" />
         <View style={styles.textoArea}>
-          <Text style={styles.label}>Catalogo filtrado por filial</Text>
+          <Text style={styles.label}>Catálogo filtrado por filial</Text>
           <Text style={styles.valor}>{filialNome}</Text>
         </View>
       </View>

@@ -5,64 +5,64 @@ export const legalInfo = {
     {
       titulo: "Dados coletados",
       texto:
-        "Coletamos dados informados no cadastro e no pedido, como nome, e-mail, telefone, endereco de entrega, itens comprados, forma de atendimento e historico de pedidos.",
+        "Coletamos dados informados no cadastro e no pedido, como nome, e-mail, telefone, endereço de entrega, itens comprados, forma de atendimento e histórico de pedidos.",
     },
     {
       titulo: "Uso dos dados",
       texto:
-        "Usamos esses dados para criar sua conta, processar pedidos, separar produtos, organizar entrega ou retirada, enviar avisos sobre o pedido e cumprir obrigacoes legais e operacionais da farmacia.",
+        "Usamos esses dados para criar sua conta, processar pedidos, separar produtos, organizar entrega ou retirada, enviar avisos sobre o pedido e cumprir obrigações legais e operacionais da farmácia.",
     },
     {
       titulo: "Compartilhamento",
       texto:
-        "Os dados podem ser acessados pela equipe da farmacia, administradores, entregadores vinculados ao pedido e prestadores tecnicos essenciais para funcionamento do app, como Firebase e servicos de hospedagem.",
+        "Os dados podem ser acessados pela equipe da farmácia, administradores, entregadores vinculados ao pedido e prestadores técnicos essenciais para funcionamento do app, como Firebase e serviços de hospedagem.",
     },
     {
-      titulo: "Armazenamento e seguranca",
+      titulo: "Armazenamento e segurança",
       texto:
-        "Os dados ficam armazenados em ambiente Firebase com regras de acesso por perfil. O app evita armazenar dados sensiveis de cartao e mantem o acesso restrito a usuarios autenticados quando necessario.",
+        "Os dados ficam armazenados em ambiente Firebase com regras de acesso por perfil. O app evita armazenar dados sensíveis de cartão e mantém o acesso restrito a usuários autenticados quando necessário.",
     },
     {
       titulo: "Direitos do titular",
       texto:
-        "Voce pode solicitar acesso, correcao, atualizacao ou exclusao dos seus dados pelo canal de privacidade, respeitadas as obrigacoes legais de guarda de registros.",
+        "Você pode solicitar acesso, correção, atualização ou exclusão dos seus dados pelo canal de privacidade, respeitadas as obrigações legais de guarda de registros.",
     },
     {
-      titulo: "Medicamentos e saude",
+      titulo: "Medicamentos e saúde",
       texto:
-        "Informacoes de pedidos podem indicar preferencias ou necessidades de saude. A farmacia deve tratar esses dados com cuidado reforcado e acesso limitado a finalidade do atendimento.",
+        "Informações de pedidos podem indicar preferências ou necessidades de saúde. A farmácia deve tratar esses dados com cuidado reforçado e acesso limitado à finalidade do atendimento.",
     },
   ],
   termosUso: [
     {
       titulo: "Uso do aplicativo",
       texto:
-        "O aplicativo permite consultar produtos, montar carrinho, solicitar entrega ou retirada, acompanhar pedidos e acessar canais de atendimento da farmacia.",
+        "O aplicativo permite consultar produtos, montar carrinho, solicitar entrega ou retirada, acompanhar pedidos e acessar canais de atendimento da farmácia.",
     },
     {
       titulo: "Cadastro",
       texto:
-        "O usuario deve informar dados corretos e manter sua conta protegida. Pedidos feitos pela conta autenticada serao vinculados ao respectivo usuario.",
+        "O usuário deve informar dados corretos e manter sua conta protegida. Pedidos feitos pela conta autenticada serão vinculados ao respectivo usuário.",
     },
     {
       titulo: "Pedidos",
       texto:
-        "A confirmacao do pedido depende de disponibilidade de produtos, area de atendimento, horario de funcionamento e validacao pela equipe da farmacia.",
+        "A confirmação do pedido depende de disponibilidade de produtos, área de atendimento, horário de funcionamento e validação pela equipe da farmácia.",
     },
     {
       titulo: "Medicamentos controlados e receita",
       texto:
-        "Produtos sujeitos a prescricao, controle especial ou restricoes sanitarias podem exigir apresentacao e validacao de receita antes da dispensacao.",
+        "Produtos sujeitos a prescrição, controle especial ou restrições sanitárias podem exigir apresentação e validação de receita antes da dispensação.",
     },
     {
-      titulo: "Precos e disponibilidade",
+      titulo: "Preços e disponibilidade",
       texto:
-        "Precos, ofertas, imagens e disponibilidade podem variar por filial e podem ser ajustados pela farmacia antes da confirmacao final do atendimento.",
+        "Preços, ofertas, imagens e disponibilidade podem variar por filial e podem ser ajustados pela farmácia antes da confirmação final do atendimento.",
     },
     {
       titulo: "Pagamentos",
       texto:
-        "Enquanto pagamentos online nao estiverem ativados, o app registra a forma escolhida e a cobranca e confirmacao ocorrem pelos meios operacionais da farmacia.",
+        "Enquanto pagamentos online não estiverem ativados, o app registra a forma escolhida e a cobrança e confirmação ocorrem pelos meios operacionais da farmácia.",
     },
   ],
 };

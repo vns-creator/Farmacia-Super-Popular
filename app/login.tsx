@@ -42,7 +42,7 @@ export default function LoginScreen() {
       router.replace("/");
     } catch (error: any) {
       console.error("Erro no login:", error);
-      showAlert("Erro ao entrar", error?.message || "Nao foi possivel entrar.");
+      showAlert("Erro ao entrar", error?.message || "Não foi possível entrar.");
     } finally {
       setLoading(false);
     }
@@ -54,7 +54,7 @@ export default function LoginScreen() {
     if (!emailLimpo) {
       showAlert(
         "Informe seu e-mail",
-        "Digite o e-mail da conta para receber o link de redefinicao.",
+        "Digite o e-mail da conta para receber o link de redefinição.",
       );
       return;
     }
@@ -65,12 +65,12 @@ export default function LoginScreen() {
       await recuperarSenha(emailLimpo);
       showAlert(
         "E-mail enviado",
-        "Se existir uma conta com este e-mail, voce recebera um link para criar uma nova senha.",
+        "Se existir uma conta com este e-mail, você receberá um link para criar uma nova senha.",
       );
     } catch (error: any) {
       console.error("Erro ao enviar recuperacao de senha:", error);
       showAlert(
-        "Nao foi possivel enviar",
+        "Não foi possível enviar",
         error?.message || "Confira o e-mail informado e tente novamente.",
       );
     } finally {
@@ -142,7 +142,7 @@ export default function LoginScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => router.push("/register")}>
-            <Text style={styles.link}>Nao tem conta? Cadastre-se</Text>
+            <Text style={styles.link}>Não tem conta? Cadastre-se</Text>
           </TouchableOpacity>
 
           <View style={styles.linksLegais}>

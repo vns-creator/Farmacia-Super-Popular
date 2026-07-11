@@ -111,7 +111,7 @@ export default function EntregasScreen() {
       },
       (error) => {
         console.error("Erro ao acompanhar entregas:", error);
-        showAlert("Erro", "Nao foi possivel acompanhar suas entregas.");
+        showAlert("Erro", "Não foi possível acompanhar suas entregas.");
         setLoading(false);
       },
     );
@@ -223,7 +223,7 @@ export default function EntregasScreen() {
         </TouchableOpacity>
 
         <Text style={styles.filialTexto}>
-          {item.filialNome || "Filial nao informada"}
+          {item.filialNome || "Filial não informada"}
         </Text>
         <Text style={styles.label}>Cliente</Text>
         <Text style={styles.texto}>

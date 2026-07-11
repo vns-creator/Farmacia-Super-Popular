@@ -22,9 +22,9 @@ export const filiais: Filial[] = [
     endereco: "Rua Cunha Pora, 555E - Efapi",
     telefone: "(49) 3321-1001",
     whatsapp: "554933211001",
-    horario: "Segunda a sabado, das 7h as 22h e domingo das 8h as 20h",
+    horario: "Segunda a sábado, das 7h às 22h e domingo das 8h às 20h",
     cnpj: "12.345.678/0001-90",
-    razaoSocial: "Farmacia Super Popular Efapi Ltda",
+    razaoSocial: "Farmácia Super Popular Efapi Ltda",
     responsavelTecnico: "Dra. Marina Costa",
     crf: "CRF-SC 12345",
     afe: "AFE 1.23456-7",
@@ -38,9 +38,9 @@ export const filiais: Filial[] = [
     endereco: "Av. Sen. Atilio Fontana, 2500E - Efapi",
     telefone: "(49) 3321-1002",
     whatsapp: "554933211002",
-    horario: "Segunda a sabado, das 7h as 22h e domingo das 8h as 20h",
+    horario: "Segunda a sábado, das 7h às 22h e domingo das 8h às 20h",
     cnpj: "12.345.678/0002-70",
-    razaoSocial: "Farmacia Super Popular Atilio Ltda",
+    razaoSocial: "Farmácia Super Popular Atilio Ltda",
     responsavelTecnico: "Dr. Felipe Ramos",
     crf: "CRF-SC 23456",
     afe: "AFE 2.34567-8",
@@ -54,9 +54,9 @@ export const filiais: Filial[] = [
     endereco: "Av. Nereu Ramos, 180E - Palmital",
     telefone: "(49) 3321-1003",
     whatsapp: "554933211003",
-    horario: "Segunda a sabado, das 7h as 22h e domingo das 8h as 20h",
+    horario: "Segunda a sábado, das 7h às 22h e domingo das 8h às 20h",
     cnpj: "12.345.678/0003-51",
-    razaoSocial: "Farmacia Super Popular Palmital Ltda",
+    razaoSocial: "Farmácia Super Popular Palmital Ltda",
     responsavelTecnico: "Dra. Juliana Martins",
     crf: "CRF-SC 34567",
     afe: "AFE 3.45678-9",
@@ -66,13 +66,13 @@ export const filiais: Filial[] = [
   },
   {
     id: "filial-lider",
-    nome: "Filial Lider",
-    endereco: "Av. Fernando Machado, 3674D - Lider",
+    nome: "Filial Líder",
+    endereco: "Av. Fernando Machado, 3674D - Líder",
     telefone: "(49) 3321-1004",
     whatsapp: "554933211004",
-    horario: "Segunda a sabado, das 7h as 22h e domingo das 8h as 20h",
+    horario: "Segunda a sábado, das 7h às 22h e domingo das 8h às 20h",
     cnpj: "12.345.678/0004-32",
-    razaoSocial: "Farmacia Super Popular Lider Ltda",
+    razaoSocial: "Farmácia Super Popular Líder Ltda",
     responsavelTecnico: "Dr. Rafael Almeida",
     crf: "CRF-SC 45678",
     afe: "AFE 4.56789-0",
@@ -94,7 +94,10 @@ function normalizarTexto(valor?: string | null) {
     .trim();
 }
 
-export function sugerirFilialPorCep(cep?: string | null, bairro?: string | null) {
+export function sugerirFilialPorCep(
+  cep?: string | null,
+  bairro?: string | null,
+) {
   const cepLimpo = String(cep || "").replace(/\D/g, "");
   const prefixoCep = cepLimpo.slice(0, 5);
   const bairroNormalizado = normalizarTexto(bairro);

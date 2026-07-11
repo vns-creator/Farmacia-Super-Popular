@@ -157,9 +157,9 @@ export default function NotificacoesScreen() {
           <Ionicons name="arrow-back" size={22} color="#1b5e20" />
         </TouchableOpacity>
         <View style={styles.headerTexto}>
-          <Text style={styles.titulo}>Notificacoes</Text>
+          <Text style={styles.titulo}>Notificações</Text>
           <Text style={styles.subtitulo}>
-            {naoLidas} {naoLidas === 1 ? "nova notificacao" : "novas notificacoes"}
+            {naoLidas} {naoLidas === 1 ? "nova notificação" : "novas notificações"}
           </Text>
         </View>
       </View>
@@ -179,7 +179,7 @@ export default function NotificacoesScreen() {
               <Ionicons name="notifications-outline" size={48} color="#1b5e20" />
               <Text style={styles.emptyTitulo}>Nada novo por aqui</Text>
               <Text style={styles.emptyTexto}>
-                Atualizacoes de pedidos vao aparecer nesta tela.
+                Atualizações de pedidos vão aparecer nesta tela.
               </Text>
             </View>
           }

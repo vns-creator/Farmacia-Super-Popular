@@ -29,7 +29,7 @@ export default function TermosScreen() {
         <View style={styles.hero}>
           <Text style={styles.heroTitulo}>Termos de Uso</Text>
           <Text style={styles.heroTexto}>
-            {farmaciaInfo.nome} - ultima atualizacao:{" "}
+            {farmaciaInfo.nome} - última atualização:{" "}
             {legalInfo.ultimaAtualizacao}
           </Text>
         </View>

@@ -36,24 +36,24 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!email || !password || !confirmPassword) {
-      showAlert("Erro", "Preencha e-mail, senha e confirmacao de senha.");
+      showAlert("Erro", "Preencha e-mail, senha e confirmação de senha.");
       return;
     }
 
     if (password !== confirmPassword) {
-      showAlert("Erro", "As senhas nao coincidem.");
+      showAlert("Erro", "As senhas não coincidem.");
       return;
     }
 
     if (password.length < 6) {
-      showAlert("Erro", "A senha deve ter no minimo 6 caracteres.");
+      showAlert("Erro", "A senha deve ter no mínimo 6 caracteres.");
       return;
     }
 
     if (!aceitouTermos) {
       showAlert(
-        "Aceite necessario",
-        "Leia e aceite os Termos de Uso e a Politica de Privacidade.",
+        "Aceite necessário",
+        "Leia e aceite os Termos de Uso e a Política de Privacidade.",
       );
       return;
     }
@@ -63,7 +63,7 @@ export default function RegisterScreen() {
     try {
       await register(email.trim(), password);
 
-      showAlert("Sucesso", "Usuario cadastrado com sucesso!", [
+      showAlert("Sucesso", "Usuário cadastrado com sucesso!", [
         {
           text: "OK",
           onPress: () => router.replace("/"),
@@ -136,7 +136,7 @@ export default function RegisterScreen() {
               ) : null}
             </View>
             <Text style={styles.aceiteTexto}>
-              Li e aceito os Termos de Uso e a Politica de Privacidade.
+              Li e aceito os Termos de Uso e a Política de Privacidade.
             </Text>
           </TouchableOpacity>
 
@@ -161,7 +161,7 @@ export default function RegisterScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => router.push("/login")}>
-            <Text style={styles.link}>Ja tem conta? Faca login</Text>
+            <Text style={styles.link}>Já tem conta? Faça login</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

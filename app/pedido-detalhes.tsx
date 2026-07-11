@@ -169,7 +169,7 @@ export default function PedidoDetalhesScreen() {
         .join(" - ");
     }
 
-    if (!pedido.entrega) return "Endereco nao informado";
+    if (!pedido.entrega) return "Endereço não informado";
 
     return [
       `${pedido.entrega.endereco || ""}, ${pedido.entrega.numero || ""}`,
@@ -206,7 +206,7 @@ export default function PedidoDetalhesScreen() {
     );
 
     if (metodo !== formasPagamento.pix && metodo !== formasPagamento.cartaoOnline) {
-      showAlert("Pagamento", "Este pedido nao usa pagamento online.");
+      showAlert("Pagamento", "Este pedido não usa pagamento online.");
       return;
     }
 
@@ -229,10 +229,10 @@ export default function PedidoDetalhesScreen() {
         await Linking.openURL(linkPagamento);
       }
 
-      showAlert("Pagamento gerado", "A cobranca foi atualizada no pedido.");
+      showAlert("Pagamento gerado", "A cobrança foi atualizada no pedido.");
     } catch (error: any) {
       console.error("Erro ao gerar pagamento online:", error);
-      showAlert("Erro", error?.message || "Nao foi possivel gerar o pagamento.");
+      showAlert("Erro", error?.message || "Não foi possível gerar o pagamento.");
     } finally {
       setGerandoPagamento(false);
     }
@@ -256,9 +256,9 @@ export default function PedidoDetalhesScreen() {
       ) : !pedido ? (
         <View style={styles.center}>
           <Ionicons name="alert-circle-outline" size={48} color="#1b5e20" />
-          <Text style={styles.emptyTitulo}>Pedido nao encontrado</Text>
+          <Text style={styles.emptyTitulo}>Pedido não encontrado</Text>
           <Text style={styles.emptyTexto}>
-            Confira se voce ainda tem acesso a este pedido.
+            Confira se você ainda tem acesso a este pedido.
           </Text>
         </View>
       ) : (
@@ -323,7 +323,7 @@ export default function PedidoDetalhesScreen() {
                 ? "storefront-outline"
                 : "bicycle-outline",
               pedido.tipoAtendimento === "retirada" ? "Retirada" : "Entrega",
-              enderecoTexto || "Nao informado",
+              enderecoTexto || "Não informado",
             )}
             {pedido.filialNome &&
               renderLinha(
@@ -346,7 +346,7 @@ export default function PedidoDetalhesScreen() {
             {renderLinha(
               "person-outline",
               "Cliente",
-              `${pedido.cliente?.nome || "Nao informado"} - ${
+              `${pedido.cliente?.nome || "Não informado"} - ${
                 pedido.cliente?.telefone || "sem telefone"
               }`,
             )}
@@ -378,7 +378,7 @@ export default function PedidoDetalhesScreen() {
             {pedido.pagamentoOnline?.mensagem &&
               renderLinha(
                 "information-circle-outline",
-                "Integracao",
+                "Integração",
                 pedido.pagamentoOnline.mensagem,
               )}
             {pedido.pagamentoOnline?.qrCode ? (
@@ -440,7 +440,7 @@ export default function PedidoDetalhesScreen() {
 
           {pedido.observacoes ? (
             <View style={styles.card}>
-              <Text style={styles.cardTitulo}>Observacoes</Text>
+              <Text style={styles.cardTitulo}>Observações</Text>
               <Text style={styles.textoLivre}>{pedido.observacoes}</Text>
             </View>
           ) : null}
@@ -471,12 +471,12 @@ export default function PedidoDetalhesScreen() {
                 </View>
               ))
             ) : (
-              <Text style={styles.textoLivre}>Itens nao informados.</Text>
+              <Text style={styles.textoLivre}>Itens não informados.</Text>
             )}
           </View>
 
           <View style={styles.card}>
-            <Text style={styles.cardTitulo}>Historico</Text>
+            <Text style={styles.cardTitulo}>Histórico</Text>
             {renderLinha("calendar-outline", "Criado em", formatarDataHora(pedido.criadoEm))}
             {pedido.atualizadoEm &&
               renderLinha(

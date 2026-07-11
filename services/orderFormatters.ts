@@ -39,7 +39,7 @@ function isTimestampLike(valor: unknown): valor is TimestampLike {
   );
 }
 
-export function formatarDataHora(valor?: unknown, fallback = "Nao informado") {
+export function formatarDataHora(valor?: unknown, fallback = "Não informado") {
   if (!valor) return fallback;
   if (isTimestampLike(valor)) return valor.toDate().toLocaleString("pt-BR");
   if (valor instanceof Date) return valor.toLocaleString("pt-BR");

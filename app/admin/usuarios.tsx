@@ -78,7 +78,7 @@ export default function AdminUsuariosScreen() {
       },
       (error) => {
         console.error("Erro ao acompanhar usuarios:", error);
-        showAlert("Erro", "Nao foi possivel carregar os usuarios.");
+        showAlert("Erro", "Não foi possível carregar os usuários.");
         setLoading(false);
       },
     );
@@ -98,7 +98,7 @@ export default function AdminUsuariosScreen() {
       });
     } catch (error) {
       console.error("Erro ao atualizar usuario:", error);
-      showAlert("Erro", "Nao foi possivel atualizar este usuario.");
+      showAlert("Erro", "Não foi possível atualizar este usuário.");
     } finally {
       setAtualizandoId(null);
     }
@@ -111,7 +111,7 @@ export default function AdminUsuariosScreen() {
       <View style={styles.card}>
         <View style={styles.cardTopo}>
           <View style={styles.usuarioTexto}>
-            <Text style={styles.nome}>{item.nome || item.email || "Usuario"}</Text>
+            <Text style={styles.nome}>{item.nome || item.email || "Usuário"}</Text>
             <Text style={styles.email}>{item.email || item.id}</Text>
           </View>
           <View style={[styles.statusChip, item.ativo && styles.statusChipAtivo]}>
@@ -264,7 +264,7 @@ export default function AdminUsuariosScreen() {
           <Ionicons name="arrow-back" size={22} color="#1b5e20" />
         </TouchableOpacity>
         <View style={styles.headerTexto}>
-          <Text style={styles.titulo}>Usuarios</Text>
+          <Text style={styles.titulo}>Usuários</Text>
           <Text style={styles.subtitulo}>Gerencie admins e entregadores</Text>
         </View>
       </View>

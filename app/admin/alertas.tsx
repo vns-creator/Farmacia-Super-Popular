@@ -153,7 +153,7 @@ export default function AdminAlertasScreen() {
 
   const salvarAlerta = async () => {
     if (!form.principioAtivo.trim()) {
-      showAlert("Informe o principio ativo", "Digite o principio ativo da regra.");
+      showAlert("Informe o princípio ativo", "Digite o princípio ativo da regra.");
       return;
     }
 
@@ -165,7 +165,7 @@ export default function AdminAlertasScreen() {
     if (form.revisado && form.alertas.length === 0) {
       showAlert(
         "Adicione os alertas principais",
-        "Antes de marcar como revisado, cadastre pelo menos 1 alerta que sera exibido ao cliente na pagina de Medicamentos.",
+        "Antes de marcar como revisado, cadastre pelo menos 1 alerta que será exibido ao cliente na página de Medicamentos.",
       );
       return;
     }
@@ -196,7 +196,7 @@ export default function AdminAlertasScreen() {
       limparForm();
     } catch (error) {
       console.error("Erro ao salvar alerta sanitario:", error);
-      showAlert("Erro", "Nao foi possivel salvar o alerta.");
+      showAlert("Erro", "Não foi possível salvar o alerta.");
     } finally {
       setSalvando(false);
     }
@@ -210,7 +210,7 @@ export default function AdminAlertasScreen() {
       });
     } catch (error) {
       console.error("Erro ao atualizar alerta sanitario:", error);
-      showAlert("Erro", "Nao foi possivel atualizar o alerta.");
+      showAlert("Erro", "Não foi possível atualizar o alerta.");
     }
   };
 
@@ -223,14 +223,14 @@ export default function AdminAlertasScreen() {
       }
     } catch (error) {
       console.error("Erro ao excluir alerta sanitario:", error);
-      showAlert("Erro", "Nao foi possivel excluir o alerta.");
+      showAlert("Erro", "Não foi possível excluir o alerta.");
     }
   };
 
   const excluirAlerta = (alerta: AlertaSanitario) => {
     showAlert(
       "Excluir alerta",
-      `A regra para "${alerta.principioAtivo}" sera excluida permanentemente.`,
+      `A regra para "${alerta.principioAtivo}" será excluída permanentemente.`,
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -262,7 +262,7 @@ export default function AdminAlertasScreen() {
       );
     } catch (error) {
       console.error("Erro ao salvar alerta geral:", error);
-      showAlert("Erro", "Nao foi possivel salvar o alerta geral.");
+      showAlert("Erro", "Não foi possível salvar o alerta geral.");
     } finally {
       setSalvandoGeral(false);
     }
@@ -282,7 +282,7 @@ export default function AdminAlertasScreen() {
       console.error("Erro ao consultar medicamentosAnvisa:", error);
       showAlert(
         "Erro na consulta",
-        "Nao foi possivel consultar o Bulario sincronizado agora.",
+        "Não foi possível consultar o Bulário sincronizado agora.",
       );
     } finally {
       setBuscandoAnvisa(false);
@@ -314,7 +314,7 @@ export default function AdminAlertasScreen() {
       );
     } catch (error) {
       console.error("Erro ao importar alertas de exemplo:", error);
-      showAlert("Erro", "Nao foi possivel importar o alerta de exemplo.");
+      showAlert("Erro", "Não foi possível importar o alerta de exemplo.");
     } finally {
       setImportando(false);
     }
@@ -327,7 +327,7 @@ export default function AdminAlertasScreen() {
           <Ionicons name="lock-closed-outline" size={48} color="#1b5e20" />
           <Text style={styles.titulo}>Acesso restrito</Text>
           <Text style={styles.subtitulo}>
-            Somente o admin geral configura os alertas sanitarios.
+            Somente o admin geral configura os alertas sanitários.
           </Text>
         </View>
       </SafeAreaView>
@@ -341,9 +341,9 @@ export default function AdminAlertasScreen() {
           <Ionicons name="arrow-back" size={22} color="#1b5e20" />
         </TouchableOpacity>
         <View style={styles.headerTexto}>
-          <Text style={styles.titulo}>Alertas sanitarios</Text>
+          <Text style={styles.titulo}>Alertas sanitários</Text>
           <Text style={styles.subtitulo}>
-            Mensagens exibidas no carrinho por principio ativo
+            Mensagens exibidas no carrinho por princípio ativo
           </Text>
         </View>
       </View>
@@ -360,7 +360,7 @@ export default function AdminAlertasScreen() {
               <Text style={styles.alertaCardMensagem}>{item.mensagem}</Text>
               <Text style={styles.alertaCardMensagem}>
                 {item.alertas.length} alerta(s) - {item.contraindicacoes.length}{" "}
-                contraindicacao(oes)
+                contraindicação(ões)
               </Text>
               <View
                 style={[
@@ -410,15 +410,15 @@ export default function AdminAlertasScreen() {
             <View style={styles.formCard}>
               <Text style={styles.formTitulo}>Alerta geral</Text>
               <Text style={styles.ajudaTexto}>
-                Exibido para qualquer medicamento no carrinho cujo principio
-                ativo nao bata com nenhuma regra especifica abaixo.
+                Exibido para qualquer medicamento no carrinho cujo princípio
+                ativo não bata com nenhuma regra específica abaixo.
               </Text>
 
               <TextInput
                 style={[styles.input, styles.inputMultiline]}
                 value={mensagemGeral}
                 onChangeText={setMensagemGeral}
-                placeholder="Ex.: Consulte a bula ou um farmaceutico antes de usar este medicamento."
+                placeholder="Ex.: Consulte a bula ou um farmacêutico antes de usar este medicamento."
                 placeholderTextColor="#8a978f"
                 multiline
               />
@@ -450,7 +450,7 @@ export default function AdminAlertasScreen() {
               <Text style={styles.formTitulo}>Consultar Bulario ANVISA</Text>
               <Text style={styles.ajudaTexto}>
                 Pesquisa pelo nome comercial na base sincronizada da ANVISA
-                (medicamentosAnvisa), pra conferir a empresa e a situacao do
+                (medicamentosAnvisa), pra conferir a empresa e a situação do
                 registro antes de preencher os alertas abaixo.
               </Text>
 
@@ -481,7 +481,7 @@ export default function AdminAlertasScreen() {
               {buscaAnvisaFeita && !buscandoAnvisa ? (
                 resultadosAnvisa.length === 0 ? (
                   <Text style={styles.ajudaTexto}>
-                    Nada encontrado. A sincronizacao com a ANVISA pode ainda
+                    Nada encontrado. A sincronização com a ANVISA pode ainda
                     estar em andamento (roda aos poucos, em segundo plano).
                   </Text>
                 ) : (
@@ -501,9 +501,9 @@ export default function AdminAlertasScreen() {
                               {medicamento.nomeProduto}
                             </Text>
                             <Text style={styles.anvisaResultadoDetalhe}>
-                              {medicamento.empresa || "Empresa nao informada"} -{" "}
+                              {medicamento.empresa || "Empresa não informada"} -{" "}
                               {medicamento.situacaoRegistro ||
-                                "Situacao nao informada"}
+                                "Situação não informada"}
                             </Text>
                             <Text style={styles.anvisaResultadoDetalhe}>
                               Processo: {medicamento.numeroProcesso}
@@ -557,7 +557,7 @@ export default function AdminAlertasScreen() {
               </TouchableOpacity>
             ) : null}
 
-            <Text style={styles.label}>Principio ativo</Text>
+            <Text style={styles.label}>Princípio ativo</Text>
             <TextInput
               style={styles.input}
               value={form.principioAtivo}
@@ -575,16 +575,16 @@ export default function AdminAlertasScreen() {
               onChangeText={(mensagem) =>
                 setForm((prev) => ({ ...prev, mensagem }))
               }
-              placeholder="Ex.: Nao usar em caso de suspeita de dengue."
+              placeholder="Ex.: Não usar em caso de suspeita de dengue."
               placeholderTextColor="#8a978f"
               multiline
             />
 
             <Text style={styles.label}>
-              Alertas principais na pagina de Medicamentos ({form.alertas.length}/6)
+              Alertas principais na página de Medicamentos ({form.alertas.length}/6)
             </Text>
             <Text style={styles.ajudaTexto}>
-              Cadastre de 3 a 6 alertas curtos. So sao exibidos ao cliente
+              Cadastre de 3 a 6 alertas curtos. Só são exibidos ao cliente
               quando a regra estiver marcada como revisada.
             </Text>
             <View style={styles.itemInputLinha}>
@@ -593,7 +593,7 @@ export default function AdminAlertasScreen() {
                 value={novoAlerta}
                 onChangeText={setNovoAlerta}
                 onSubmitEditing={adicionarAlerta}
-                placeholder="Ex.: Nao usar em caso de suspeita de dengue."
+                placeholder="Ex.: Não usar em caso de suspeita de dengue."
                 placeholderTextColor="#8a978f"
                 returnKeyType="done"
               />
@@ -618,14 +618,14 @@ export default function AdminAlertasScreen() {
               </View>
             ) : null}
 
-            <Text style={styles.label}>Contraindicacoes</Text>
+            <Text style={styles.label}>Contraindicações</Text>
             <View style={styles.itemInputLinha}>
               <TextInput
                 style={[styles.input, styles.itemInput]}
                 value={novaContraindicacao}
                 onChangeText={setNovaContraindicacao}
                 onSubmitEditing={adicionarContraindicacao}
-                placeholder="Ex.: Ulcera gastrica ativa."
+                placeholder="Ex.: Úlcera gástrica ativa."
                 placeholderTextColor="#8a978f"
                 returnKeyType="done"
               />
@@ -655,7 +655,7 @@ export default function AdminAlertasScreen() {
               style={styles.input}
               value={form.fonte}
               onChangeText={(fonte) => setForm((prev) => ({ ...prev, fonte }))}
-              placeholder="Ex.: Bulario Eletronico da ANVISA"
+              placeholder="Ex.: Bulário Eletrônico da ANVISA"
               placeholderTextColor="#8a978f"
             />
 
@@ -677,8 +677,8 @@ export default function AdminAlertasScreen() {
             </View>
             {!form.revisado ? (
               <Text style={styles.avisoTexto}>
-                Enquanto estiver como &quot;Rascunho&quot;, os alertas nao aparecem
-                para o cliente na pagina de Medicamentos.
+                Enquanto estiver como &quot;Rascunho&quot;, os alertas não aparecem
+                para o cliente na página de Medicamentos.
               </Text>
             ) : null}
 
@@ -694,13 +694,13 @@ export default function AdminAlertasScreen() {
                 <Ionicons name="save-outline" size={18} color="#fff" />
               )}
               <Text style={styles.salvarBotaoTexto}>
-                {form.id ? "Salvar alteracoes" : "Adicionar regra"}
+                {form.id ? "Salvar alterações" : "Adicionar regra"}
               </Text>
             </TouchableOpacity>
 
             {form.id ? (
               <TouchableOpacity style={styles.cancelarBotao} onPress={limparForm}>
-                <Text style={styles.cancelarBotaoTexto}>Cancelar edicao</Text>
+                <Text style={styles.cancelarBotaoTexto}>Cancelar edição</Text>
               </TouchableOpacity>
             ) : null}
 

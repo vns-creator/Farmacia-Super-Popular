@@ -47,7 +47,7 @@ export default function SobreSistemaScreen() {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitulo}>Roteiro de demonstracao</Text>
+          <Text style={styles.cardTitulo}>Roteiro de demonstração</Text>
           {sistemaInfo.roteiro.map((passo, index) => (
             <View key={passo} style={styles.passoLinha}>
               <Text style={styles.passoNumero}>{index + 1}</Text>
