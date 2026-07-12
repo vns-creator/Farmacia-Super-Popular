@@ -197,6 +197,16 @@ export default function ContaScreen() {
               <Text style={styles.botaoSecundarioTexto}>Gerenciar produtos</Text>
             </TouchableOpacity>
 
+            <TouchableOpacity
+              style={styles.botaoSecundario}
+              onPress={() => router.push("/admin/receitas")}
+              activeOpacity={0.9}
+            >
+              <Text style={styles.botaoSecundarioTexto}>
+                Validação de receitas
+              </Text>
+            </TouchableOpacity>
+
             {isAdminGeral && (
               <TouchableOpacity
                 style={styles.botaoSecundario}
@@ -220,13 +230,25 @@ export default function ContaScreen() {
         )}
 
         {isFarmaceuticoAtivo && (
-          <TouchableOpacity
-            style={styles.botaoSecundario}
-            onPress={() => router.push("/admin/alertas")}
-            activeOpacity={0.9}
-          >
-            <Text style={styles.botaoSecundarioTexto}>Alertas sanitários</Text>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity
+              style={styles.botaoSecundario}
+              onPress={() => router.push("/admin/alertas")}
+              activeOpacity={0.9}
+            >
+              <Text style={styles.botaoSecundarioTexto}>Alertas sanitários</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.botaoSecundario}
+              onPress={() => router.push("/admin/receitas")}
+              activeOpacity={0.9}
+            >
+              <Text style={styles.botaoSecundarioTexto}>
+                Validação de receitas
+              </Text>
+            </TouchableOpacity>
+          </>
         )}
 
         <TouchableOpacity

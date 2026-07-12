@@ -14,6 +14,14 @@ const statusPedidoLabels = {
   entregue: { completo: "Entregue", curto: "Entregue" },
   finalizado: { completo: "Finalizado", curto: "Finalizado" },
   cancelado: { completo: "Cancelado", curto: "Cancelado" },
+  aguardando_validacao_farmaceutica: {
+    completo: "Aguardando validação da receita",
+    curto: "Validando receita",
+  },
+  receita_reprovada: {
+    completo: "Receita reprovada",
+    curto: "Receita reprovada",
+  },
 } as const;
 
 type StatusPedido = keyof typeof statusPedidoLabels;

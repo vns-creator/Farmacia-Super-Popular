@@ -96,10 +96,17 @@ type Pedido = {
     instrucao?: string;
   } | null;
   entregadorNome?: string;
+  statusReceita?: "pendente" | "aprovada" | "reprovada" | null;
+  receitaMotivoReprovacao?: string | null;
 };
 
 const statusEtapas = [
   { value: "recebido", label: "Recebido", icon: "receipt-outline" },
+  {
+    value: "aguardando_validacao_farmaceutica",
+    label: "Receita",
+    icon: "document-text-outline",
+  },
   { value: "preparo", label: "Preparo", icon: "medkit-outline" },
   { value: "pronto_retirada", label: "Pronto", icon: "storefront-outline" },
   { value: "entrega", label: "Aceito", icon: "checkmark-done-outline" },
@@ -157,6 +164,12 @@ export default function PedidoDetalhesScreen() {
     0,
     statusOrdem.indexOf(statusAtual as (typeof statusOrdem)[number]),
   );
+  const teveValidacaoDeReceita = Boolean(pedido?.statusReceita);
+  const etapasVisiveis = teveValidacaoDeReceita
+    ? statusEtapas
+    : statusEtapas.filter(
+        (etapa) => etapa.value !== "aguardando_validacao_farmaceutica",
+      );
 
   const enderecoTexto = useMemo(() => {
     if (!pedido) return "";
@@ -283,11 +296,39 @@ export default function PedidoDetalhesScreen() {
             </View>
           </View>
 
+          {pedido.status === "aguardando_validacao_farmaceutica" && (
+            <View style={styles.avisoReceitaBox}>
+              <Ionicons name="document-text-outline" size={20} color="#92400e" />
+              <Text style={styles.avisoReceitaTexto}>
+                Sua receita foi recebida e está aguardando validação de um
+                farmacêutico. O pedido segue para separação assim que for
+                aprovada.
+              </Text>
+            </View>
+          )}
+
+          {pedido.status === "receita_reprovada" && (
+            <View style={styles.avisoReceitaReprovadaBox}>
+              <Ionicons name="alert-circle-outline" size={20} color="#d32f2f" />
+              <View style={styles.avisoReceitaTextoArea}>
+                <Text style={styles.avisoReceitaReprovadaTitulo}>
+                  Receita reprovada
+                </Text>
+                <Text style={styles.avisoReceitaTexto}>
+                  {pedido.receitaMotivoReprovacao ||
+                    "A receita enviada não foi aceita."}{" "}
+                  Fale com a farmácia para reenviar uma nova foto.
+                </Text>
+              </View>
+            </View>
+          )}
+
           <View style={styles.card}>
             <Text style={styles.cardTitulo}>Acompanhamento</Text>
             <View style={styles.timeline}>
-              {statusEtapas.map((etapa, index) => {
-                const ativo = index <= indiceStatusAtual;
+              {etapasVisiveis.map((etapa) => {
+                const ativo =
+                  statusOrdem.indexOf(etapa.value) <= indiceStatusAtual;
 
                 return (
                   <View key={etapa.value} style={styles.etapa}>
@@ -568,6 +609,43 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   statusChipTexto: { color: "#1f2937", fontSize: 12, fontWeight: "800" },
+  avisoReceitaBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    backgroundColor: "#fff8db",
+    borderRadius: 14,
+    padding: 14,
+    marginTop: 14,
+    borderWidth: 1,
+    borderColor: "#f4d36c",
+  },
+  avisoReceitaReprovadaBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    backgroundColor: "#fdecea",
+    borderRadius: 14,
+    padding: 14,
+    marginTop: 14,
+    borderWidth: 1,
+    borderColor: "#f5c2c0",
+  },
+  avisoReceitaTextoArea: {
+    flex: 1,
+  },
+  avisoReceitaReprovadaTitulo: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#d32f2f",
+    marginBottom: 4,
+  },
+  avisoReceitaTexto: {
+    flex: 1,
+    fontSize: 13,
+    color: "#4b5563",
+    lineHeight: 18,
+  },
   card: {
     backgroundColor: "#fff",
     borderRadius: 18,

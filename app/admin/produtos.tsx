@@ -95,6 +95,7 @@ const produtoInicial = {
   estoquePorTamanho: {} as Record<string, string>,
   pmc: "",
   bulaUrl: "",
+  exigeReceita: false,
 };
 
 export default function AdminProdutosScreen() {
@@ -400,6 +401,7 @@ export default function AdminProdutosScreen() {
       ),
       pmc: produto.pmc ? String(produto.pmc).replace(".", ",") : "",
       bulaUrl: produto.bulaUrl || "",
+      exigeReceita: produto.exigeReceita === true,
     });
     setNovoTamanho("");
   };
@@ -520,6 +522,7 @@ export default function AdminProdutosScreen() {
       principioAtivo: form.isMedicamento ? form.principioAtivo.trim() : "",
       pmc: form.isMedicamento && pmc !== null ? pmc : null,
       bulaUrl: form.isMedicamento ? form.bulaUrl.trim() : "",
+      exigeReceita: form.isMedicamento ? form.exigeReceita : false,
       codigoBarras: form.codigoBarras.trim(),
       temTamanhos: form.temTamanhos,
       tamanhos: form.temTamanhos ? form.tamanhos : [],
@@ -795,6 +798,11 @@ export default function AdminProdutosScreen() {
                 {item.bulaUrl ? (
                   <Text style={styles.produtoCodigoBarras}>
                     Bula cadastrada
+                  </Text>
+                ) : null}
+                {item.exigeReceita ? (
+                  <Text style={styles.produtoCodigoBarras}>
+                    Exige receita médica
                   </Text>
                 ) : null}
               </>
@@ -1218,6 +1226,26 @@ export default function AdminProdutosScreen() {
                   placeholderTextColor="#8a978f"
                   autoCapitalize="none"
                 />
+
+                <View style={styles.estoqueFormTopo}>
+                  <View style={styles.estoqueFormTextoArea}>
+                    <Text style={styles.label}>Exige receita médica</Text>
+                    <Text style={styles.estoqueFormAjuda}>
+                      O cliente precisa anexar a receita no checkout antes de
+                      o pedido seguir para separação.
+                    </Text>
+                  </View>
+                  <Chip
+                    label={form.exigeReceita ? "Exige" : "Livre"}
+                    active={form.exigeReceita}
+                    onPress={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        exigeReceita: !prev.exigeReceita,
+                      }))
+                    }
+                  />
+                </View>
               </>
             ) : null}
 

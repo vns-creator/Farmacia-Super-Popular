@@ -6,13 +6,16 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   serverTimestamp,
   setDoc,
 } from "firebase/firestore";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import * as ImagePicker from "expo-image-picker";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  Image,
   Linking,
   Platform,
   SafeAreaView,
@@ -39,6 +42,7 @@ import {
   prepararPagamentoOnline,
 } from "@/services/payments";
 import { formatarMoeda } from "@/services/formatters";
+import { enviarFotoReceita } from "@/services/receitas";
 
 type TipoAtendimento = "entrega" | "retirada";
 
@@ -88,6 +92,12 @@ export default function CheckoutScreen() {
   );
   const [filialSugeridaPorCep, setFilialSugeridaPorCep] = useState(false);
   const [finalizando, setFinalizando] = useState(false);
+  const [precisaReceita, setPrecisaReceita] = useState(false);
+  const [itensComReceita, setItensComReceita] = useState<string[]>([]);
+  const [fotosReceita, setFotosReceita] = useState<
+    { caminho: string; uriLocal: string }[]
+  >([]);
+  const [enviandoReceita, setEnviandoReceita] = useState(false);
 
   const opcoesPagamento = [
     { valor: formasPagamento.dinheiro, label: formasPagamentoLabels.Dinheiro },
@@ -154,6 +164,55 @@ export default function CheckoutScreen() {
 
     carregarEnderecos();
   }, [carregarEnderecos, user]);
+
+  useEffect(() => {
+    let cancelado = false;
+
+    const verificarExigeReceita = async () => {
+      if (carrinho.length === 0) {
+        setPrecisaReceita(false);
+        setItensComReceita([]);
+        return;
+      }
+
+      try {
+        const idsUnicos = Array.from(new Set(carrinho.map((item) => item.id)));
+        const snapshots = await Promise.all(
+          idsUnicos.map((id) => getDoc(doc(db, "produtos", id))),
+        );
+
+        if (cancelado) return;
+
+        const idsComReceita = new Set(
+          snapshots
+            .filter(
+              (snapshot) =>
+                snapshot.exists() && snapshot.data()?.exigeReceita === true,
+            )
+            .map((snapshot) => snapshot.id),
+        );
+
+        const nomesComReceita = Array.from(
+          new Set(
+            carrinho
+              .filter((item) => idsComReceita.has(item.id))
+              .map((item) => item.nome),
+          ),
+        );
+
+        setPrecisaReceita(idsComReceita.size > 0);
+        setItensComReceita(nomesComReceita);
+      } catch (error) {
+        console.error("Erro ao verificar exigencia de receita:", error);
+      }
+    };
+
+    verificarExigeReceita();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [carrinho]);
 
   useEffect(() => {
     if (filialCatalogoId) {
@@ -313,6 +372,49 @@ export default function CheckoutScreen() {
     ]);
   };
 
+  const adicionarFotoReceita = async () => {
+    if (!user) {
+      showAlert("Entre na sua conta", "Faça login para anexar a receita.");
+      return;
+    }
+
+    try {
+      const permissao = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permissao.granted) {
+        showAlert(
+          "Permissão necessária",
+          "Permita acesso às fotos para anexar a receita.",
+        );
+        return;
+      }
+
+      const resultado = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.7,
+      });
+
+      if (resultado.canceled || !resultado.assets?.[0]?.uri) {
+        return;
+      }
+
+      setEnviandoReceita(true);
+      const uriLocal = resultado.assets[0].uri;
+      const caminho = await enviarFotoReceita(user.uid, uriLocal);
+
+      setFotosReceita((prev) => [...prev, { caminho, uriLocal }]);
+    } catch (error) {
+      console.error("Erro ao enviar foto da receita:", error);
+      showAlert("Erro", "Não foi possível enviar a foto da receita.");
+    } finally {
+      setEnviandoReceita(false);
+    }
+  };
+
+  const removerFotoReceita = (caminho: string) => {
+    setFotosReceita((prev) => prev.filter((item) => item.caminho !== caminho));
+  };
+
   const enviarPedido = async (valorTroco: number) => {
     try {
       setFinalizando(true);
@@ -359,6 +461,7 @@ export default function CheckoutScreen() {
           quantidade: item.quantidade,
           tamanho: item.tamanhoSelecionado || null,
         })),
+        receitaPaths: fotosReceita.map((item) => item.caminho),
       });
       const codigoPedido =
         typeof pedidoResultado.data === "object" &&
@@ -415,6 +518,7 @@ export default function CheckoutScreen() {
       }
 
       limparCarrinho();
+      setFotosReceita([]);
 
       showAlert("Sucesso", `Pedido realizado com sucesso!${pagamentoMensagem}`);
       router.replace(
@@ -460,6 +564,14 @@ export default function CheckoutScreen() {
 
     if (!nome || !telefone) {
       showAlert("Preencha os campos", "Informe nome e telefone.");
+      return;
+    }
+
+    if (precisaReceita && fotosReceita.length === 0) {
+      showAlert(
+        "Receita médica necessária",
+        "Anexe uma foto da receita para os medicamentos que exigem receita antes de finalizar o pedido.",
+      );
       return;
     }
 
@@ -630,6 +742,52 @@ Total: ${formatarMoeda(totalPedido)}
             </Text>
           </View>
         </View>
+
+        {/* RECEITA MEDICA */}
+        {precisaReceita && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitulo}>Receita médica</Text>
+            <View style={styles.avisoPagamento}>
+              <Ionicons name="document-text-outline" size={20} color="#1b5e20" />
+              <Text style={styles.avisoPagamentoTexto}>
+                {itensComReceita.length > 1
+                  ? `Este pedido tem ${itensComReceita.length} itens que exigem receita: ${itensComReceita.join(", ")}. Anexe fotos legíveis que cubram todos eles para o farmacêutico validar antes da separação.`
+                  : `${itensComReceita[0] || "Este medicamento"} exige receita. Anexe uma foto legível da receita para o farmacêutico validar antes da separação.`}
+              </Text>
+            </View>
+
+            {fotosReceita.length > 0 && (
+              <View style={styles.receitasLista}>
+                {fotosReceita.map((item) => (
+                  <View key={item.caminho} style={styles.receitaMiniatura}>
+                    <Image
+                      source={{ uri: item.uriLocal }}
+                      style={styles.receitaImagem}
+                    />
+                    <TouchableOpacity
+                      style={styles.receitaRemover}
+                      onPress={() => removerFotoReceita(item.caminho)}
+                    >
+                      <Ionicons name="close" size={14} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={styles.botaoSalvarEndereco}
+              onPress={adicionarFotoReceita}
+              disabled={enviandoReceita}
+              activeOpacity={0.9}
+            >
+              <Ionicons name="camera-outline" size={18} color="#1f2937" />
+              <Text style={styles.botaoSalvarEnderecoTexto}>
+                {enviandoReceita ? "Enviando..." : "Anexar foto da receita"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* DADOS */}
         <View style={styles.card}>
@@ -1530,6 +1688,39 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#4b5563",
     lineHeight: 18,
+  },
+
+  receitasLista: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 12,
+  },
+
+  receitaMiniatura: {
+    width: 72,
+    height: 72,
+    borderRadius: 12,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#edf2ee",
+  },
+
+  receitaImagem: {
+    width: "100%",
+    height: "100%",
+  },
+
+  receitaRemover: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   obs: {

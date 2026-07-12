@@ -43,6 +43,7 @@ export type ProdutoFirestore = {
   estoquePorTamanho?: Record<string, number>;
   pmc?: number;
   bulaUrl?: string;
+  exigeReceita?: boolean;
 };
 
 type ProductFilters = {
@@ -110,6 +111,7 @@ export function mapProdutoFirestore(
         : {},
     pmc: data.pmc ? Number(data.pmc) : undefined,
     bulaUrl: String(data.bulaUrl || ""),
+    exigeReceita: data.exigeReceita === true,
   };
 }
 

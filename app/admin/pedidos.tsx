@@ -377,6 +377,9 @@ export default function AdminPedidosScreen() {
   };
 
   const renderPedido = ({ item }: { item: PedidoAdmin }) => {
+    const aguardandoReceita =
+      item.status === "aguardando_validacao_farmaceutica" ||
+      item.status === "receita_reprovada";
     const enderecoRetirada = [
       item.retirada?.filialNome || item.retirada?.local,
       item.retirada?.filialEndereco,
@@ -599,7 +602,18 @@ export default function AdminPedidosScreen() {
           )}
         </View>
 
-        {abaSelecionada === "preparando" && (
+        {abaSelecionada === "preparando" && aguardandoReceita && (
+          <View style={styles.entregadorBox}>
+            <Text style={styles.label}>Receita médica</Text>
+            <Text style={styles.local}>
+              {item.status === "receita_reprovada"
+                ? "Receita reprovada - aguardando o cliente regularizar."
+                : "Aguardando validação do farmacêutico em Validação de receitas."}
+            </Text>
+          </View>
+        )}
+
+        {abaSelecionada === "preparando" && !aguardandoReceita && (
           <View style={styles.acoes}>
             {statusOptions.map((status) => (
               <TouchableOpacity

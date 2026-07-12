@@ -698,6 +698,7 @@ exports.criarPedido = onCall(async (request) => {
   }
 
   const produtos = [];
+  let precisaReceita = false;
 
   for (const item of itensSolicitados) {
     const produtoId = sanitizeText(item?.id, 120);
@@ -728,6 +729,10 @@ exports.criarPedido = onCall(async (request) => {
       throw new HttpsError("failed-precondition", "Produto indisponivel.");
     }
 
+    if (produto.exigeReceita === true) {
+      precisaReceita = true;
+    }
+
     let tamanho = null;
 
     if (produto.temTamanhos === true) {
@@ -753,11 +758,26 @@ exports.criarPedido = onCall(async (request) => {
       categoria: sanitizeText(produto.categoria || "Produto", 60),
       codigoBarras: sanitizeText(produto.codigoBarras || "", 60),
       tamanho,
+      exigeReceita: produto.exigeReceita === true,
       filialId: produto.filialId || null,
       filialIds: Array.isArray(produto.filialIds)
         ? produto.filialIds.filter((id) => typeof id === "string" && id.trim())
         : [],
     });
+  }
+
+  // So aceita caminhos de Storage dentro da propria pasta do cliente
+  // (receitas/{uid}/...), pra impedir que ele referencie o arquivo de
+  // receita de outra pessoa no pedido.
+  const receitaPaths = (Array.isArray(data.receitaPaths) ? data.receitaPaths : [])
+    .map((caminho) => sanitizeText(caminho, 200))
+    .filter((caminho) => caminho.startsWith(`receitas/${uid}/`));
+
+  if (precisaReceita && receitaPaths.length === 0) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Anexe a foto da receita medica para concluir o pedido.",
+    );
   }
 
   const entrega = data.entrega || {};
@@ -1083,7 +1103,9 @@ exports.criarPedido = onCall(async (request) => {
         ({ filialId, filialIds, refPath, ...produto }) => produto,
       ),
       total,
-      status: "recebido",
+      status: precisaReceita ? "aguardando_validacao_farmaceutica" : "recebido",
+      receitas: receitaPaths.map((caminho) => ({ caminho, enviadaEm: now })),
+      statusReceita: precisaReceita ? "pendente" : null,
       criadoEm: now,
     });
 
@@ -1299,6 +1321,101 @@ exports.confirmarRetiradaEntrega = onCall(async (request) => {
     await db.collection("notificacoes").add({
       titulo: "Pedido saiu para entrega",
       mensagem: `${pedido.codigoPedido || pedidoId} saiu para entrega com o entregador.`,
+      pedidoId,
+      userUid: pedido.userUid,
+      perfilDestino: null,
+      lida: false,
+      criadoEm: now,
+    });
+  }
+
+  return { ok: true };
+});
+
+exports.revisarReceitaPedido = onCall(async (request) => {
+  assertSignedIn(request);
+
+  const uid = request.auth.uid;
+  const { pedidoId, aprovado, motivoReprovacao } = request.data || {};
+
+  if (!pedidoId) {
+    throw new HttpsError("invalid-argument", "Informe o pedidoId.");
+  }
+
+  if (typeof aprovado !== "boolean") {
+    throw new HttpsError(
+      "invalid-argument",
+      "Informe se a receita foi aprovada ou reprovada.",
+    );
+  }
+
+  const usuarioSnap = await db.collection("usuarios").doc(uid).get();
+  const usuario = usuarioSnap.exists ? usuarioSnap.data() : null;
+  const podeRevisar =
+    usuario?.ativo === true &&
+    (usuario?.perfil === "admin" || usuario?.perfil === "farmaceutico");
+
+  if (!podeRevisar) {
+    throw new HttpsError(
+      "permission-denied",
+      "Conta sem permissao para validar receitas.",
+    );
+  }
+
+  const ehAdminGeral =
+    usuario.perfil === "admin" &&
+    (usuario.adminGeral === true || !usuario.filialId);
+  const filialRestrita = !ehAdminGeral && usuario.filialId ? usuario.filialId : null;
+
+  const pedidoRef = db.collection("pedidos").doc(pedidoId);
+  const pedidoSnap = await pedidoRef.get();
+
+  if (!pedidoSnap.exists) {
+    throw new HttpsError("not-found", "Pedido nao encontrado.");
+  }
+
+  const pedido = pedidoSnap.data();
+
+  if (filialRestrita && pedido.filialId !== filialRestrita) {
+    throw new HttpsError(
+      "permission-denied",
+      "Este pedido nao e da sua filial.",
+    );
+  }
+
+  if (pedido.status !== "aguardando_validacao_farmaceutica") {
+    throw new HttpsError(
+      "failed-precondition",
+      "Este pedido nao esta aguardando validacao de receita.",
+    );
+  }
+
+  const motivo = aprovado ? "" : sanitizeText(motivoReprovacao, 300);
+
+  if (!aprovado && !motivo) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Informe o motivo da reprovacao da receita.",
+    );
+  }
+
+  const now = admin.firestore.FieldValue.serverTimestamp();
+
+  await pedidoRef.update({
+    status: aprovado ? "recebido" : "receita_reprovada",
+    statusReceita: aprovado ? "aprovada" : "reprovada",
+    receitaMotivoReprovacao: motivo || null,
+    receitaRevisadaPor: uid,
+    receitaRevisadaEm: now,
+    atualizadoEm: now,
+  });
+
+  if (pedido.userUid) {
+    await db.collection("notificacoes").add({
+      titulo: aprovado ? "Receita aprovada" : "Receita reprovada",
+      mensagem: aprovado
+        ? `${pedido.codigoPedido || pedidoId}: sua receita foi validada e o pedido segue para separacao.`
+        : `${pedido.codigoPedido || pedidoId}: sua receita nao foi aprovada. ${motivo}`,
       pedidoId,
       userUid: pedido.userUid,
       perfilDestino: null,

@@ -163,6 +163,15 @@ service cloud.firestore {
             && resource.data.tipoAtendimento == "entrega"
             && resource.data.filialId == userProfile().data.filialId
           )
+          || (
+            hasProfile("farmaceutico")
+            && resource.data.status == "aguardando_validacao_farmaceutica"
+            && (
+              !userProfile().data.keys().hasAny(["filialId"])
+              || userProfile().data.filialId == null
+              || resource.data.filialId == userProfile().data.filialId
+            )
+          )
         );
 
       allow update: if (
@@ -290,6 +299,10 @@ service cloud.firestore {
         && (
           !request.resource.data.keys().hasAny(["principioAtivo"])
           || request.resource.data.principioAtivo is string
+        )
+        && (
+          !request.resource.data.keys().hasAny(["exigeReceita"])
+          || request.resource.data.exigeReceita is bool
         )
         && (
           !request.resource.data.keys().hasAny(["codigoBarras"])
