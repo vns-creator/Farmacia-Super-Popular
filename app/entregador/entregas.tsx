@@ -450,7 +450,9 @@ export default function EntregasScreen() {
               <Ionicons name="bicycle-outline" size={48} color="#1b5e20" />
               <Text style={styles.subtitulo}>
                 {abaSelecionada === "disponiveis"
-                  ? "Nenhuma entrega disponível no momento."
+                  ? !filialUsuarioId
+                    ? "Sua conta não tem uma filial definida. Peça para um administrador definir sua filial em Gerenciar usuários."
+                    : "Nenhuma entrega disponível no momento."
                   : abaSelecionada === "ativas"
                     ? "Nenhuma entrega em andamento."
                     : "Nenhum pedido entregue ainda."}

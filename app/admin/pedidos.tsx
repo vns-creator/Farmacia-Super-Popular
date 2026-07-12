@@ -1,13 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import {
-  collection,
-  doc,
-  onSnapshot,
-  query,
-  updateDoc,
-  where,
-} from "firebase/firestore";
+import { collection, doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import React, { useEffect, useMemo, useState } from "react";
 import {
@@ -104,14 +97,6 @@ type PedidoAdmin = {
   userUid?: string;
 };
 
-type UsuarioEntregador = {
-  id: string;
-  nome?: string;
-  email?: string;
-  filialId?: string | null;
-  adminGeral?: boolean;
-};
-
 type AbaPedidos = "ativos" | "finalizados";
 
 const statusOptions = [
@@ -130,15 +115,11 @@ export default function AdminPedidosScreen() {
   const isAdminGeral = isAdminAtivo && (perfil?.adminGeral === true || !perfil?.filialId);
   const filialUsuarioId = perfil?.filialId || null;
   const [pedidos, setPedidos] = useState<PedidoAdmin[]>([]);
-  const [entregadores, setEntregadores] = useState<UsuarioEntregador[]>([]);
   const [loading, setLoading] = useState(true);
   const [abaSelecionada, setAbaSelecionada] = useState<AbaPedidos>("ativos");
   const [busca, setBusca] = useState("");
   const [statusFiltro, setStatusFiltro] = useState("todos");
   const [observacoesInternas, setObservacoesInternas] = useState<
-    Record<string, string>
-  >({});
-  const [entregadoresSelecionados, setEntregadoresSelecionados] = useState<
     Record<string, string>
   >({});
   const [gerandoPagamentoId, setGerandoPagamentoId] = useState<string | null>(
@@ -309,12 +290,6 @@ export default function AdminPedidosScreen() {
 
     setLoading(true);
 
-    const entregadoresQuery = query(
-      collection(db, "usuarios"),
-      where("perfil", "==", "entregador"),
-      where("ativo", "==", true),
-    );
-
     const unsubscribePedidos = onSnapshot(
       collection(db, "pedidos"),
       (snapshot) => {
@@ -342,31 +317,7 @@ export default function AdminPedidosScreen() {
       },
     );
 
-    const unsubscribeEntregadores = onSnapshot(
-      entregadoresQuery,
-      (snapshot) => {
-        const entregadoresData = snapshot.docs.map((docSnap) => ({
-          id: docSnap.id,
-          ...docSnap.data(),
-        })) as UsuarioEntregador[];
-
-        setEntregadores(
-          isAdminGeral
-            ? entregadoresData
-            : entregadoresData.filter(
-                (entregador) => entregador.filialId === filialUsuarioId,
-              ),
-        );
-      },
-      (error) => {
-        console.error("Erro ao acompanhar entregadores:", error);
-      },
-    );
-
-    return () => {
-      unsubscribePedidos();
-      unsubscribeEntregadores();
-    };
+    return unsubscribePedidos;
   }, [filialUsuarioId, isAdminAtivo, isAdminGeral]);
 
   const atualizarPedido = async (pedidoId: string, dados: Record<string, any>) => {
@@ -392,35 +343,10 @@ export default function AdminPedidosScreen() {
           userUid: pedidoAtual.userUid,
         });
       }
-
-      if (dados.entregadorId) {
-        await criarNotificacao({
-          titulo: "Nova entrega atribuída",
-          mensagem: `${pedidoAtual?.codigoPedido || pedidoId} foi atribuído para você.`,
-          pedidoId,
-          userUid: dados.entregadorId,
-        });
-      }
     } catch (error) {
       console.error("Erro ao atualizar pedido:", error);
       showAlert("Erro", "Não foi possível atualizar o pedido.");
     }
-  };
-
-  const atribuirEntregador = (pedido: PedidoAdmin) => {
-    const entregadorId = entregadoresSelecionados[pedido.id];
-    const entregador = entregadores.find((item) => item.id === entregadorId);
-
-    if (!entregadorId) {
-      showAlert("Informe o entregador", "Selecione um entregador.");
-      return;
-    }
-
-    atualizarPedido(pedido.id, {
-      entregadorId,
-      entregadorNome: entregador?.nome || entregador?.email || entregadorId,
-      status: "entrega",
-    });
   };
 
   const salvarObservacaoInterna = (pedido: PedidoAdmin) => {
@@ -671,54 +597,16 @@ export default function AdminPedidosScreen() {
           </View>
         )}
 
-        {abaSelecionada === "ativos" && item.tipoAtendimento === "entrega" && (
+        {item.tipoAtendimento === "entrega" && (
           <View style={styles.entregadorBox}>
             <Text style={styles.label}>Entregador</Text>
-            {entregadores.length > 0 ? (
-              <View style={styles.entregadoresLista}>
-                {entregadores.map((entregador) => {
-                  const ativo =
-                    entregadoresSelecionados[item.id] === entregador.id ||
-                    item.entregadorId === entregador.id;
-                  const nome =
-                    entregador.nome || entregador.email || "Entregador";
-
-                  return (
-                    <TouchableOpacity
-                      key={entregador.id}
-                      style={[
-                        styles.entregadorChip,
-                        ativo && styles.entregadorChipAtivo,
-                      ]}
-                      onPress={() =>
-                        setEntregadoresSelecionados((prev) => ({
-                          ...prev,
-                          [item.id]: entregador.id,
-                        }))
-                      }
-                    >
-                      <Text
-                        style={[
-                          styles.entregadorChipTexto,
-                          ativo && styles.entregadorChipTextoAtivo,
-                        ]}
-                      >
-                        {nome}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            ) : (
-              <Text style={styles.local}>Nenhum entregador cadastrado.</Text>
-            )}
-
-            <TouchableOpacity
-              style={styles.botaoAtribuir}
-              onPress={() => atribuirEntregador(item)}
-            >
-              <Text style={styles.botaoAtribuirTexto}>Atribuir</Text>
-            </TouchableOpacity>
+            <Text style={styles.local}>
+              {item.entregadorNome
+                ? item.entregadorNome
+                : item.status === "pronto_retirada"
+                  ? "Aguardando um entregador aceitar"
+                  : "Ainda sem entregador"}
+            </Text>
           </View>
         )}
       </View>
@@ -1159,28 +1047,6 @@ const styles = StyleSheet.create({
     color: "#374151",
     fontWeight: "800",
   },
-  entregadoresLista: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  entregadorChip: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#d7e7d9",
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-  },
-  entregadorChipAtivo: {
-    backgroundColor: "#1b5e20",
-    borderColor: "#1b5e20",
-  },
-  entregadorChipTexto: { color: "#1b5e20", fontSize: 12, fontWeight: "800" },
-  entregadorChipTextoAtivo: { color: "#fff" },
-  botaoAtribuir: {
-    backgroundColor: "#1b5e20",
-    borderRadius: 12,
-    minHeight: 44,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  botaoAtribuirTexto: { color: "#fff", fontWeight: "800" },
   center: {
     flex: 1,
     alignItems: "center",
