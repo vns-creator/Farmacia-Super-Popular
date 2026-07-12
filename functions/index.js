@@ -1219,9 +1219,9 @@ exports.aceitarEntrega = onCall(async (request) => {
       );
     }
 
-    // entregadorId e status "entrega" sao sempre definidos juntos (aqui ou na
-    // atribuicao manual do admin), entao checar o status ja cobre o caso de
-    // a entrega ter acabado de ser aceita por outra pessoa.
+    // entregadorId e status "entrega" sao sempre definidos juntos, entao
+    // checar o status ja cobre o caso de a entrega ter acabado de ser aceita
+    // por outra pessoa.
     if (pedido.status !== "pronto_retirada") {
       throw new HttpsError(
         "failed-precondition",
@@ -1236,6 +1236,76 @@ exports.aceitarEntrega = onCall(async (request) => {
       atualizadoEm: admin.firestore.FieldValue.serverTimestamp(),
     });
   });
+
+  return { ok: true };
+});
+
+exports.confirmarRetiradaEntrega = onCall(async (request) => {
+  assertSignedIn(request);
+
+  const { pedidoId } = request.data || {};
+
+  if (!pedidoId) {
+    throw new HttpsError("invalid-argument", "Informe o pedidoId.");
+  }
+
+  const uid = request.auth.uid;
+  const usuarioSnap = await db.collection("usuarios").doc(uid).get();
+  const usuario = usuarioSnap.exists ? usuarioSnap.data() : null;
+
+  if (!usuario || usuario.perfil !== "entregador" || usuario.ativo !== true) {
+    throw new HttpsError(
+      "permission-denied",
+      "Conta sem permissao de entregador.",
+    );
+  }
+
+  const pedidoRef = db.collection("pedidos").doc(pedidoId);
+  const pedidoSnap = await pedidoRef.get();
+
+  if (!pedidoSnap.exists) {
+    throw new HttpsError("not-found", "Pedido nao encontrado.");
+  }
+
+  const pedido = pedidoSnap.data();
+
+  if (pedido.entregadorId !== uid) {
+    throw new HttpsError(
+      "permission-denied",
+      "Este pedido nao esta atribuido a voce.",
+    );
+  }
+
+  if (pedido.status === "a_caminho" || pedido.status === "entregue") {
+    return { ok: true, jaRetirado: true };
+  }
+
+  if (pedido.status !== "entrega") {
+    throw new HttpsError(
+      "failed-precondition",
+      "Este pedido ainda nao esta pronto para retirada.",
+    );
+  }
+
+  const now = admin.firestore.FieldValue.serverTimestamp();
+
+  await pedidoRef.update({
+    status: "a_caminho",
+    retiradoEm: now,
+    atualizadoEm: now,
+  });
+
+  if (pedido.userUid) {
+    await db.collection("notificacoes").add({
+      titulo: "Pedido saiu para entrega",
+      mensagem: `${pedido.codigoPedido || pedidoId} saiu para entrega com o entregador.`,
+      pedidoId,
+      userUid: pedido.userUid,
+      perfilDestino: null,
+      lida: false,
+      criadoEm: now,
+    });
+  }
 
   return { ok: true };
 });

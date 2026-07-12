@@ -6,7 +6,11 @@ const statusPedidoLabels = {
     completo: "Pronto para retirada",
     curto: "Pronto retirada",
   },
-  entrega: { completo: "Saiu para entrega", curto: "Saiu entrega" },
+  entrega: {
+    completo: "Aceito pelo entregador",
+    curto: "Aceito p/ entregador",
+  },
+  a_caminho: { completo: "Saiu para entrega", curto: "Saiu entrega" },
   entregue: { completo: "Entregue", curto: "Entregue" },
   finalizado: { completo: "Finalizado", curto: "Finalizado" },
   cancelado: { completo: "Cancelado", curto: "Cancelado" },

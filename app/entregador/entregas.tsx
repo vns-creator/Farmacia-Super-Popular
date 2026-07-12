@@ -220,6 +220,58 @@ export default function EntregasScreen() {
     }
   };
 
+  const confirmarRetirada = (entrega: Entrega) => {
+    if (Platform.OS === "web") {
+      retirarPedido(entrega);
+      return;
+    }
+
+    showAlert(
+      "Confirmar retirada",
+      "Você já retirou este pedido na farmácia?",
+      [
+        { text: "Ainda não", style: "cancel" },
+        {
+          text: "Confirmar",
+          onPress: () => retirarPedido(entrega),
+        },
+      ],
+    );
+  };
+
+  const retirarPedido = async (entrega: Entrega) => {
+    try {
+      setEntregaAtualizandoId(entrega.id);
+
+      const confirmarRetiradaEntrega = httpsCallable(
+        getFunctions(),
+        "confirmarRetiradaEntrega",
+      );
+
+      await confirmarRetiradaEntrega({ pedidoId: entrega.id });
+
+      setEntregas((entregasAtuais) =>
+        entregasAtuais.map((item) =>
+          item.id === entrega.id
+            ? {
+                ...item,
+                status: "a_caminho",
+                atualizadoEm: new Date(),
+              }
+            : item,
+        ),
+      );
+    } catch (error: any) {
+      console.error("Erro ao confirmar retirada:", error);
+      showAlert(
+        "Erro",
+        error?.message || "Não foi possível confirmar a retirada do pedido.",
+      );
+    } finally {
+      setEntregaAtualizandoId(null);
+    }
+  };
+
   const aceitarEntrega = async (entrega: Entrega) => {
     try {
       setEntregaAtualizandoId(entrega.id);
@@ -252,7 +304,8 @@ export default function EntregasScreen() {
 
   const formatarStatus = (status?: string) => {
     const statusMap: Record<string, string> = {
-      entrega: "Em entrega",
+      entrega: "Aguardando retirada",
+      a_caminho: "Saiu para entrega",
       entregue: "Entregue",
       finalizado: "Finalizado",
       cancelado: "Cancelado",
@@ -331,6 +384,22 @@ export default function EntregasScreen() {
               </Text>
             </View>
           </View>
+        ) : item.status === "entrega" ? (
+          <TouchableOpacity
+            style={[styles.botao, atualizando && styles.botaoDesativado]}
+            onPress={() => confirmarRetirada(item)}
+            disabled={atualizando}
+            activeOpacity={0.9}
+          >
+            {atualizando ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Ionicons name="cube-outline" size={20} color="#fff" />
+            )}
+            <Text style={styles.botaoTexto}>
+              {atualizando ? "Atualizando..." : "Retirei o pedido"}
+            </Text>
+          </TouchableOpacity>
         ) : (
           <TouchableOpacity
             style={[styles.botao, atualizando && styles.botaoDesativado]}

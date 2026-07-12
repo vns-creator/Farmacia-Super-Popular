@@ -97,16 +97,16 @@ type PedidoAdmin = {
   userUid?: string;
 };
 
-type AbaPedidos = "ativos" | "finalizados";
+type AbaPedidos = "preparando" | "em_rota" | "finalizados";
 
 const statusOptions = [
   { label: "Em preparo", value: "preparo" },
   { label: "Pronto retirada", value: "pronto_retirada" },
-  { label: "Saiu entrega", value: "entrega" },
   { label: "Finalizado", value: "finalizado" },
 ];
 
 const statusEncerrados = new Set(["finalizado", "entregue", "cancelado"]);
+const statusEmRota = new Set(["a_caminho"]);
 
 export default function AdminPedidosScreen() {
   const router = useRouter();
@@ -116,7 +116,8 @@ export default function AdminPedidosScreen() {
   const filialUsuarioId = perfil?.filialId || null;
   const [pedidos, setPedidos] = useState<PedidoAdmin[]>([]);
   const [loading, setLoading] = useState(true);
-  const [abaSelecionada, setAbaSelecionada] = useState<AbaPedidos>("ativos");
+  const [abaSelecionada, setAbaSelecionada] =
+    useState<AbaPedidos>("preparando");
   const [busca, setBusca] = useState("");
   const [statusFiltro, setStatusFiltro] = useState("todos");
   const [observacoesInternas, setObservacoesInternas] = useState<
@@ -126,8 +127,13 @@ export default function AdminPedidosScreen() {
     null,
   );
 
-  const pedidosAtivos = pedidos.filter(
-    (pedido) => !statusEncerrados.has(pedido.status || "recebido"),
+  const pedidosPreparando = pedidos.filter(
+    (pedido) =>
+      !statusEncerrados.has(pedido.status || "recebido") &&
+      !statusEmRota.has(pedido.status || ""),
+  );
+  const pedidosEmRota = pedidos.filter((pedido) =>
+    statusEmRota.has(pedido.status || ""),
   );
   const pedidosFinalizados = pedidos.filter((pedido) =>
     statusEncerrados.has(pedido.status || ""),
@@ -142,7 +148,12 @@ export default function AdminPedidosScreen() {
 
   const pedidosVisiveis = useMemo(() => {
     const termo = busca.trim().toLowerCase();
-    const base = abaSelecionada === "ativos" ? pedidosAtivos : pedidosFinalizados;
+    const base =
+      abaSelecionada === "preparando"
+        ? pedidosPreparando
+        : abaSelecionada === "em_rota"
+          ? pedidosEmRota
+          : pedidosFinalizados;
 
     return base.filter((pedido) => {
       const textoBusca = [
@@ -163,7 +174,14 @@ export default function AdminPedidosScreen() {
 
       return bateBusca && bateStatus;
     });
-  }, [abaSelecionada, busca, pedidosAtivos, pedidosFinalizados, statusFiltro]);
+  }, [
+    abaSelecionada,
+    busca,
+    pedidosPreparando,
+    pedidosEmRota,
+    pedidosFinalizados,
+    statusFiltro,
+  ]);
 
   const abrirWhatsApp = async (pedido: PedidoAdmin) => {
     const telefone = (pedido.cliente?.telefone || "").replace(/\D/g, "");
@@ -581,7 +599,7 @@ export default function AdminPedidosScreen() {
           )}
         </View>
 
-        {abaSelecionada === "ativos" && (
+        {abaSelecionada === "preparando" && (
           <View style={styles.acoes}>
             {statusOptions.map((status) => (
               <TouchableOpacity
@@ -638,18 +656,36 @@ export default function AdminPedidosScreen() {
         <TouchableOpacity
           style={[
             styles.abaBotao,
-            abaSelecionada === "ativos" && styles.abaBotaoAtiva,
+            abaSelecionada === "preparando" && styles.abaBotaoAtiva,
           ]}
-          onPress={() => setAbaSelecionada("ativos")}
+          onPress={() => setAbaSelecionada("preparando")}
           activeOpacity={0.9}
         >
           <Text
             style={[
               styles.abaTexto,
-              abaSelecionada === "ativos" && styles.abaTextoAtivo,
+              abaSelecionada === "preparando" && styles.abaTextoAtivo,
             ]}
           >
-            Em processamento ({pedidosAtivos.length})
+            Preparando ({pedidosPreparando.length})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.abaBotao,
+            abaSelecionada === "em_rota" && styles.abaBotaoAtiva,
+          ]}
+          onPress={() => setAbaSelecionada("em_rota")}
+          activeOpacity={0.9}
+        >
+          <Text
+            style={[
+              styles.abaTexto,
+              abaSelecionada === "em_rota" && styles.abaTextoAtivo,
+            ]}
+          >
+            Em rota ({pedidosEmRota.length})
           </Text>
         </TouchableOpacity>
 
@@ -734,9 +770,11 @@ export default function AdminPedidosScreen() {
             <View style={styles.center}>
               <Ionicons name="receipt-outline" size={48} color="#1b5e20" />
               <Text style={styles.subtitulo}>
-                {abaSelecionada === "ativos"
-                  ? "Nenhum pedido ativo no momento."
-                  : "Nenhum pedido finalizado ainda."}
+                {abaSelecionada === "preparando"
+                  ? "Nenhum pedido em preparo no momento."
+                  : abaSelecionada === "em_rota"
+                    ? "Nenhum pedido a caminho no momento."
+                    : "Nenhum pedido finalizado ainda."}
               </Text>
             </View>
           }

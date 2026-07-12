@@ -102,7 +102,8 @@ const statusEtapas = [
   { value: "recebido", label: "Recebido", icon: "receipt-outline" },
   { value: "preparo", label: "Preparo", icon: "medkit-outline" },
   { value: "pronto_retirada", label: "Pronto", icon: "storefront-outline" },
-  { value: "entrega", label: "Entrega", icon: "bicycle-outline" },
+  { value: "entrega", label: "Aceito", icon: "checkmark-done-outline" },
+  { value: "a_caminho", label: "A caminho", icon: "bicycle-outline" },
   { value: "entregue", label: "Entregue", icon: "checkmark-circle-outline" },
   { value: "finalizado", label: "Finalizado", icon: "flag-outline" },
 ] as const;
