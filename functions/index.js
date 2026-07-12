@@ -1644,7 +1644,7 @@ const ANVISA_BASE = "https://consultas.anvisa.gov.br/api";
 const ANVISA_PAGE_SIZE = 100;
 const ANVISA_REQUEST_DELAY_MS = 400; // nao martelar o servidor publico da ANVISA
 const ANVISA_MAX_RETRIES = 3;
-const ANVISA_MAX_PAGINAS_POR_EXECUCAO = 20; // ~2000 itens por execucao, para caber no timeout
+const ANVISA_MAX_PAGINAS_POR_EXECUCAO = 100; // ~10000 itens por execucao, para caber no timeout
 
 // O dominio fica atras do Cloudflare: sem User-Agent/Referer de navegador,
 // as requisicoes tomam 403 antes mesmo de chegar no backend da ANVISA.
@@ -1861,10 +1861,13 @@ async function executarSyncAnvisa({ forcarFull = false } = {}) {
   return resumo;
 }
 
-// Roda a cada 10 minutos, processando um lote de paginas por vez ate cobrir
-// o bulario inteiro; depois disso, cada passagem so grava o que mudou.
+// Roda uma vez por semana, processando um lote de paginas por vez ate cobrir
+// o bulario inteiro (retomando de onde parou, se precisar de mais de uma
+// execucao); depois disso, cada passagem so grava o que mudou. A frequencia
+// baixa e proposital - o catalogo da ANVISA nao muda de hora em hora, entao
+// nao ha necessidade de reler tudo a cada poucos minutos como antes.
 exports.sincronizarBularioAnvisa = onSchedule(
-  { schedule: "every 10 minutes", timeoutSeconds: 300 },
+  { schedule: "every 168 hours", timeoutSeconds: 300 },
   async () => {
     await executarSyncAnvisa({ forcarFull: false });
   },
