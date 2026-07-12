@@ -512,12 +512,6 @@ exports.criarPedido = onCall(async (request) => {
     );
   }
 
-  const subtotal = Number(
-    produtos
-      .reduce((total, item) => total + item.preco * item.quantidade, 0)
-      .toFixed(2),
-  );
-  const total = Number((subtotal + taxaEntrega).toFixed(2));
   const precisaTroco =
     pagamento === FORMAS_PAGAMENTO.dinheiro &&
     data.pagamentoDetalhes?.precisaTroco === true;
@@ -525,7 +519,7 @@ exports.criarPedido = onCall(async (request) => {
     ? Number(String(data.pagamentoDetalhes?.trocoPara || "").replace(",", "."))
     : null;
 
-  if (precisaTroco && (!Number.isFinite(trocoPara) || trocoPara <= total)) {
+  if (precisaTroco && !Number.isFinite(trocoPara)) {
     throw new HttpsError("invalid-argument", "Valor de troco invalido.");
   }
 
@@ -590,6 +584,7 @@ exports.criarPedido = onCall(async (request) => {
     });
 
     const produtosJaProcessados = new Set();
+    const precosAtuais = new Map();
 
     produtoDocs.forEach((produtoDoc, index) => {
       if (!produtoDoc.exists) {
@@ -602,6 +597,18 @@ exports.criarPedido = onCall(async (request) => {
       if (produtoAtual.ativo === false) {
         throw new HttpsError("failed-precondition", "Produto indisponivel.");
       }
+
+      if (typeof produtoAtual.preco !== "number" || produtoAtual.preco <= 0) {
+        throw new HttpsError(
+          "failed-precondition",
+          `Produto indisponivel: ${produtoCarrinho.nome}.`,
+        );
+      }
+
+      // O preco pode ter mudado entre a leitura inicial (fora da transacao) e
+      // este ponto - sempre usar o preco lido agora, dentro da transacao,
+      // para o pedido cobrar o valor realmente vigente no momento da compra.
+      precosAtuais.set(produtoCarrinho.id, Number(produtoAtual.preco));
 
       if (produtosJaProcessados.has(produtoCarrinho.id)) {
         return;
@@ -661,6 +668,21 @@ exports.criarPedido = onCall(async (request) => {
         atualizadoEm: now,
       });
     });
+
+    const produtosAtualizados = produtos.map((produto) => ({
+      ...produto,
+      preco: precosAtuais.get(produto.id) ?? produto.preco,
+    }));
+    const subtotal = Number(
+      produtosAtualizados
+        .reduce((soma, item) => soma + item.preco * item.quantidade, 0)
+        .toFixed(2),
+    );
+    const total = Number((subtotal + taxaEntrega).toFixed(2));
+
+    if (precisaTroco && trocoPara <= total) {
+      throw new HttpsError("invalid-argument", "Valor de troco invalido.");
+    }
 
     if (nextClientNumber !== null) {
       transaction.set(
@@ -732,7 +754,9 @@ exports.criarPedido = onCall(async (request) => {
       observacoes: sanitizeText(data.observacoes, 500),
       subtotal,
       taxaEntrega,
-      itens: produtos.map(({ filialId, filialIds, refPath, ...produto }) => produto),
+      itens: produtosAtualizados.map(
+        ({ filialId, filialIds, refPath, ...produto }) => produto,
+      ),
       total,
       status: "recebido",
       criadoEm: now,
@@ -744,6 +768,7 @@ exports.criarPedido = onCall(async (request) => {
       pedidoId: codigoPedido,
       userUid: null,
       perfilDestino: "admin",
+      filialId: filial.id,
       lida: false,
       criadoEm: now,
     });

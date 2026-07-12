@@ -111,6 +111,7 @@ export default function AdminUsuariosScreen() {
   const renderUsuario = ({ item }: { item: UsuarioAdmin }) => {
     const atualizando = atualizandoId === item.id;
     const ehCliente = (item.perfil || "cliente") === "cliente";
+    const ehEntregador = item.perfil === "entregador";
 
     return (
       <View style={styles.card}>
@@ -135,11 +136,12 @@ export default function AdminUsuariosScreen() {
           <>
             <Text style={styles.label}>Filial</Text>
             <Text style={styles.ajudaFilial}>
-              Define qual painel administrativo esta pessoa gerencia. Nao se
-              aplica a clientes, que sempre veem produtos de todas as filiais.
+              {ehEntregador
+                ? "Define de qual filial este entregador recebe e visualiza as entregas. Escolha uma filial especifica."
+                : "Define qual painel administrativo esta pessoa gerencia. Nao se aplica a clientes, que sempre veem produtos de todas as filiais."}
             </Text>
             <View style={styles.perfis}>
-              {isAdminGeral && (
+              {isAdminGeral && !ehEntregador && (
                 <TouchableOpacity
                   style={[
                     styles.perfilBotao,

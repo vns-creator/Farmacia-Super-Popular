@@ -7,6 +7,7 @@ import {
   doc,
   onSnapshot,
   query,
+  runTransaction,
   serverTimestamp,
   updateDoc,
 } from "firebase/firestore";
@@ -717,14 +718,19 @@ export default function AdminProdutosScreen() {
   };
 
   const ajustarEstoque = async (produto: ProdutoFirestore, delta: number) => {
-    const estoqueAtual = Number(produto.estoque || 0);
-    const proximoEstoque = Math.max(0, estoqueAtual + delta);
+    const produtoRef = doc(db, "produtos", produto.id);
 
     try {
-      await updateDoc(doc(db, "produtos", produto.id), {
-        controlarEstoque: true,
-        estoque: proximoEstoque,
-        atualizadoEm: serverTimestamp(),
+      await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(produtoRef);
+        const estoqueAtual = Number(snap.data()?.estoque || 0);
+        const proximoEstoque = Math.max(0, estoqueAtual + delta);
+
+        transaction.update(produtoRef, {
+          controlarEstoque: true,
+          estoque: proximoEstoque,
+          atualizadoEm: serverTimestamp(),
+        });
       });
     } catch (error) {
       console.error("Erro ao ajustar estoque:", error);
@@ -737,14 +743,21 @@ export default function AdminProdutosScreen() {
     tamanho: string,
     delta: number,
   ) => {
-    const estoqueAtual = Number(produto.estoquePorTamanho?.[tamanho] || 0);
-    const proximoEstoque = Math.max(0, estoqueAtual + delta);
+    const produtoRef = doc(db, "produtos", produto.id);
 
     try {
-      await updateDoc(doc(db, "produtos", produto.id), {
-        controlarEstoque: true,
-        [`estoquePorTamanho.${tamanho}`]: proximoEstoque,
-        atualizadoEm: serverTimestamp(),
+      await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(produtoRef);
+        const estoqueAtual = Number(
+          snap.data()?.estoquePorTamanho?.[tamanho] || 0,
+        );
+        const proximoEstoque = Math.max(0, estoqueAtual + delta);
+
+        transaction.update(produtoRef, {
+          controlarEstoque: true,
+          [`estoquePorTamanho.${tamanho}`]: proximoEstoque,
+          atualizadoEm: serverTimestamp(),
+        });
       });
     } catch (error) {
       console.error("Erro ao ajustar estoque do tamanho:", error);

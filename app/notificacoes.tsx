@@ -80,12 +80,18 @@ export default function NotificacoesScreen() {
     ];
 
     if (perfil?.perfil === "admin" && perfil.ativo) {
-      unsubscribes.push(
-        onSnapshot(
-          query(
+      const isAdminGeral = perfil.adminGeral === true || !perfil.filialId;
+      const notificacoesAdminQuery = isAdminGeral
+        ? query(collection(db, "notificacoes"), where("perfilDestino", "==", "admin"))
+        : query(
             collection(db, "notificacoes"),
             where("perfilDestino", "==", "admin"),
-          ),
+            where("filialId", "==", perfil.filialId),
+          );
+
+      unsubscribes.push(
+        onSnapshot(
+          notificacoesAdminQuery,
           (snapshot) => {
             snapshot.docChanges().forEach((change) => {
               if (change.type === "removed") {

@@ -34,11 +34,20 @@ export function AdminOrderNotificationListener() {
       return;
     }
 
-    const notificacoesQuery = query(
-      collection(db, "notificacoes"),
-      where("perfilDestino", "==", "admin"),
-      where("lida", "==", false),
-    );
+    const isAdminGeral = perfil.adminGeral === true || !perfil.filialId;
+
+    const notificacoesQuery = isAdminGeral
+      ? query(
+          collection(db, "notificacoes"),
+          where("perfilDestino", "==", "admin"),
+          where("lida", "==", false),
+        )
+      : query(
+          collection(db, "notificacoes"),
+          where("perfilDestino", "==", "admin"),
+          where("lida", "==", false),
+          where("filialId", "==", perfil.filialId),
+        );
 
     const unsubscribe = onSnapshot(
       notificacoesQuery,
