@@ -22,6 +22,7 @@ type Entrega = {
   codigoPedido?: string;
   filialId?: string | null;
   filialNome?: string;
+  tipoAtendimento?: "entrega" | "retirada";
   criadoEm?: any;
   entregueEm?: any;
   atualizadoEm?: any;
@@ -42,7 +43,7 @@ type Entrega = {
   } | null;
 };
 
-type AbaEntregas = "ativas" | "entregues";
+type AbaEntregas = "disponiveis" | "ativas" | "entregues";
 
 const statusEncerrados = new Set(["finalizado", "entregue", "cancelado"]);
 
@@ -52,11 +53,13 @@ export default function EntregasScreen() {
   const isEntregadorAtivo = perfil?.perfil === "entregador" && perfil.ativo;
   const filialUsuarioId = perfil?.filialId || null;
   const [entregas, setEntregas] = useState<Entrega[]>([]);
+  const [pedidosDisponiveis, setPedidosDisponiveis] = useState<Entrega[]>([]);
   const [loading, setLoading] = useState(true);
   const [entregaAtualizandoId, setEntregaAtualizandoId] = useState<
     string | null
   >(null);
-  const [abaSelecionada, setAbaSelecionada] = useState<AbaEntregas>("ativas");
+  const [abaSelecionada, setAbaSelecionada] =
+    useState<AbaEntregas>("disponiveis");
 
   const entregasAtivas = entregas.filter(
     (entrega) => !statusEncerrados.has(entrega.status || ""),
@@ -65,7 +68,11 @@ export default function EntregasScreen() {
     statusEncerrados.has(entrega.status || ""),
   );
   const entregasVisiveis =
-    abaSelecionada === "ativas" ? entregasAtivas : entregasFinalizadas;
+    abaSelecionada === "disponiveis"
+      ? pedidosDisponiveis
+      : abaSelecionada === "ativas"
+        ? entregasAtivas
+        : entregasFinalizadas;
 
   useEffect(() => {
     if (!user || !isEntregadorAtivo) {
@@ -113,6 +120,46 @@ export default function EntregasScreen() {
         console.error("Erro ao acompanhar entregas:", error);
         showAlert("Erro", "Não foi possível acompanhar suas entregas.");
         setLoading(false);
+      },
+    );
+
+    return unsubscribe;
+  }, [filialUsuarioId, isEntregadorAtivo, user]);
+
+  useEffect(() => {
+    if (!user || !isEntregadorAtivo || !filialUsuarioId) {
+      setPedidosDisponiveis([]);
+      return;
+    }
+
+    const disponiveisQuery = query(
+      collection(db, "pedidos"),
+      where("status", "==", "pronto_retirada"),
+      where("tipoAtendimento", "==", "entrega"),
+      where("filialId", "==", filialUsuarioId),
+    );
+
+    const unsubscribe = onSnapshot(
+      disponiveisQuery,
+      (snapshot) => {
+        const dados = snapshot.docs
+          .map(
+            (docSnap) =>
+              ({
+                id: docSnap.id,
+                ...docSnap.data(),
+              }) as Entrega,
+          )
+          .sort((a, b) => {
+            const dataA = a.criadoEm?.toDate ? a.criadoEm.toDate().getTime() : 0;
+            const dataB = b.criadoEm?.toDate ? b.criadoEm.toDate().getTime() : 0;
+            return dataA - dataB;
+          });
+
+        setPedidosDisponiveis(dados);
+      },
+      (error) => {
+        console.error("Erro ao acompanhar entregas disponiveis:", error);
       },
     );
 
@@ -173,6 +220,29 @@ export default function EntregasScreen() {
     }
   };
 
+  const aceitarEntrega = async (entrega: Entrega) => {
+    try {
+      setEntregaAtualizandoId(entrega.id);
+
+      const aceitarEntregaFn = httpsCallable(getFunctions(), "aceitarEntrega");
+
+      await aceitarEntregaFn({ pedidoId: entrega.id });
+
+      setPedidosDisponiveis((atuais) =>
+        atuais.filter((item) => item.id !== entrega.id),
+      );
+      setAbaSelecionada("ativas");
+    } catch (error: any) {
+      console.error("Erro ao aceitar entrega:", error);
+      showAlert(
+        "Erro",
+        error?.message || "Não foi possível aceitar esta entrega.",
+      );
+    } finally {
+      setEntregaAtualizandoId(null);
+    }
+  };
+
   const formatarData = (data?: any) => {
     if (!data) return "Data não informada";
     if (data.toDate) return data.toDate().toLocaleString("pt-BR");
@@ -194,6 +264,7 @@ export default function EntregasScreen() {
   const renderEntrega = ({ item }: { item: Entrega }) => {
     const atualizando = entregaAtualizandoId === item.id;
     const finalizada = statusEncerrados.has(item.status || "");
+    const disponivel = abaSelecionada === "disponiveis";
     const endereco = item.entrega
       ? `${item.entrega.endereco || ""}, ${item.entrega.numero || ""}${
           item.entrega.complemento ? ` - ${item.entrega.complemento}` : ""
@@ -234,7 +305,23 @@ export default function EntregasScreen() {
         <Text style={styles.label}>Endereço</Text>
         <Text style={styles.texto}>{endereco}</Text>
 
-        {finalizada ? (
+        {disponivel ? (
+          <TouchableOpacity
+            style={[styles.botao, atualizando && styles.botaoDesativado]}
+            onPress={() => aceitarEntrega(item)}
+            disabled={atualizando}
+            activeOpacity={0.9}
+          >
+            {atualizando ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Ionicons name="bicycle-outline" size={20} color="#fff" />
+            )}
+            <Text style={styles.botaoTexto}>
+              {atualizando ? "Aceitando..." : "Aceitar entrega"}
+            </Text>
+          </TouchableOpacity>
+        ) : finalizada ? (
           <View style={styles.entregueBox}>
             <Ionicons name="checkmark-circle" size={20} color="#1b5e20" />
             <View style={styles.entregueTextoArea}>
@@ -296,6 +383,24 @@ export default function EntregasScreen() {
         <TouchableOpacity
           style={[
             styles.abaBotao,
+            abaSelecionada === "disponiveis" && styles.abaBotaoAtiva,
+          ]}
+          onPress={() => setAbaSelecionada("disponiveis")}
+          activeOpacity={0.9}
+        >
+          <Text
+            style={[
+              styles.abaTexto,
+              abaSelecionada === "disponiveis" && styles.abaTextoAtivo,
+            ]}
+          >
+            Disponíveis ({pedidosDisponiveis.length})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.abaBotao,
             abaSelecionada === "ativas" && styles.abaBotaoAtiva,
           ]}
           onPress={() => setAbaSelecionada("ativas")}
@@ -344,9 +449,11 @@ export default function EntregasScreen() {
             <View style={styles.center}>
               <Ionicons name="bicycle-outline" size={48} color="#1b5e20" />
               <Text style={styles.subtitulo}>
-                {abaSelecionada === "ativas"
-                  ? "Nenhuma entrega em andamento."
-                  : "Nenhum pedido entregue ainda."}
+                {abaSelecionada === "disponiveis"
+                  ? "Nenhuma entrega disponível no momento."
+                  : abaSelecionada === "ativas"
+                    ? "Nenhuma entrega em andamento."
+                    : "Nenhum pedido entregue ainda."}
               </Text>
             </View>
           }

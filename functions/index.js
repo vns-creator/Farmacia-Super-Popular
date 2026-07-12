@@ -1,5 +1,9 @@
 const admin = require("firebase-admin");
-const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
+const {
+  onCall,
+  onRequest,
+  HttpsError,
+} = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { defineSecret } = require("firebase-functions/params");
 const {
@@ -42,63 +46,357 @@ const filiais = [
 ];
 
 const coberturaEntrega = [
-  { bairro: "Centro", filialId: "filial-lider", taxaEntrega: 6.9, cepPrefixes: ["89801"] },
-  { bairro: "Lider", filialId: "filial-lider", taxaEntrega: 6.9, aliases: ["lider"], cepPrefixes: ["89805"] },
-  { bairro: "Passo dos Fortes", filialId: "filial-lider", taxaEntrega: 6.9, cepPrefixes: ["89805"] },
-  { bairro: "Presidente Medici", filialId: "filial-lider", taxaEntrega: 7.9, aliases: ["presidente medici"], cepPrefixes: ["89801", "89806"] },
-  { bairro: "Maria Goretti", filialId: "filial-lider", taxaEntrega: 7.9, cepPrefixes: ["89801", "89806"] },
-  { bairro: "Sao Cristovao", filialId: "filial-lider", taxaEntrega: 7.9, aliases: ["sao cristovao"], cepPrefixes: ["89803", "89804"] },
-  { bairro: "Jardim America", filialId: "filial-lider", taxaEntrega: 7.9, cepPrefixes: ["89803"] },
-  { bairro: "Jardim Italia", filialId: "filial-lider", taxaEntrega: 7.9, cepPrefixes: ["89802", "89814"] },
-  { bairro: "Bela Vista", filialId: "filial-lider", taxaEntrega: 8.9, cepPrefixes: ["89804"] },
-  { bairro: "Jardins", filialId: "filial-lider", taxaEntrega: 8.9, cepPrefixes: ["89804"] },
-  { bairro: "Parque das Palmeiras", filialId: "filial-lider", taxaEntrega: 8.9, cepPrefixes: ["89803"] },
-  { bairro: "Boa Vista", filialId: "filial-lider", taxaEntrega: 8.9, cepPrefixes: ["89806"] },
-  { bairro: "Bom Pastor", filialId: "filial-lider", taxaEntrega: 8.9, cepPrefixes: ["89806"] },
-  { bairro: "Sao Pedro", filialId: "filial-lider", taxaEntrega: 8.9, cepPrefixes: ["89806"] },
-  { bairro: "Pinheirinho", filialId: "filial-lider", taxaEntrega: 8.9, cepPrefixes: ["89806"] },
-  { bairro: "Bom Retiro", filialId: "filial-lider", taxaEntrega: 9.9, cepPrefixes: ["89805", "89811"] },
-  { bairro: "Santa Paulina", filialId: "filial-lider", taxaEntrega: 9.9, cepPrefixes: ["89805", "89811"] },
-  { bairro: "SAIC", filialId: "filial-lider", taxaEntrega: 9.9, aliases: ["saic"], cepPrefixes: ["89802"] },
-  { bairro: "Fronteira Sul", filialId: "filial-lider", taxaEntrega: 10.9, cepPrefixes: ["89808"] },
-  { bairro: "Autodromo", filialId: "filial-lider", taxaEntrega: 10.9, cepPrefixes: ["89808"] },
-  { bairro: "Araras", filialId: "filial-lider", taxaEntrega: 10.9, cepPrefixes: ["89808"] },
-  { bairro: "Desbravador", filialId: "filial-lider", taxaEntrega: 10.9, cepPrefixes: ["89811"] },
-  { bairro: "Lajeado", filialId: "filial-lider", taxaEntrega: 11.9, cepPrefixes: ["89804"] },
-  { bairro: "Jardins do Vale", filialId: "filial-lider", taxaEntrega: 11.9, cepPrefixes: ["89807"] },
-  { bairro: "Sao Lucas", filialId: "filial-lider", taxaEntrega: 9.9, cepPrefixes: ["89806", "89812"] },
-  { bairro: "Paraiso", filialId: "filial-lider", taxaEntrega: 9.9, cepPrefixes: ["89806"] },
-  { bairro: "Efapi", filialId: "filial-efapi-tancredo", taxaEntrega: 6.9, cepPrefixes: ["89809"] },
-  { bairro: "Eldorado", filialId: "filial-efapi-tancredo", taxaEntrega: 7.9, cepPrefixes: ["89810"] },
-  { bairro: "Cristo Rei", filialId: "filial-efapi-tancredo", taxaEntrega: 7.9, cepPrefixes: ["89810"] },
-  { bairro: "Alvorada", filialId: "filial-efapi-tancredo", taxaEntrega: 8.9, cepPrefixes: ["89804", "89810"] },
-  { bairro: "Engenho Braun", filialId: "filial-efapi-tancredo", taxaEntrega: 9.9, cepPrefixes: ["89804", "89809"] },
-  { bairro: "Agua Santa", filialId: "filial-efapi-tancredo", taxaEntrega: 9.9, cepPrefixes: ["89810"] },
-  { bairro: "Belvedere", filialId: "filial-efapi-atilio-fontana", taxaEntrega: 7.9, cepPrefixes: ["89810"] },
-  { bairro: "Trevo", filialId: "filial-efapi-atilio-fontana", taxaEntrega: 7.9, cepPrefixes: ["89810"] },
-  { bairro: "Vila Rica", filialId: "filial-efapi-atilio-fontana", taxaEntrega: 8.9, cepPrefixes: ["89810"] },
-  { bairro: "Alto da Serra", filialId: "filial-efapi-atilio-fontana", taxaEntrega: 12.9, cepPrefixes: ["89816"] },
-  { bairro: "Goio-En", filialId: "filial-efapi-atilio-fontana", taxaEntrega: 14.9, aliases: ["goio en"], cepPrefixes: ["89816"] },
-  { bairro: "Centro Marechal Bormann", filialId: "filial-efapi-atilio-fontana", taxaEntrega: 14.9, aliases: ["centro marechal bormann", "marechal bormann"], cepPrefixes: ["89816"] },
-  { bairro: "Figueira", filialId: "filial-efapi-atilio-fontana", taxaEntrega: 14.9, cepPrefixes: ["89816"] },
-  { bairro: "Vederti", filialId: "filial-efapi-atilio-fontana", taxaEntrega: 14.9, cepPrefixes: ["89816"] },
-  { bairro: "Perimetral", filialId: "filial-efapi-atilio-fontana", taxaEntrega: 14.9, cepPrefixes: ["89816"] },
-  { bairro: "Palmital", filialId: "filial-palmital", taxaEntrega: 6.9, cepPrefixes: ["89812", "89814"] },
-  { bairro: "Santo Antonio", filialId: "filial-palmital", taxaEntrega: 7.9, aliases: ["santo antonio"], cepPrefixes: ["89815"] },
-  { bairro: "Universitario", filialId: "filial-palmital", taxaEntrega: 7.9, cepPrefixes: ["89812", "89814"] },
-  { bairro: "Seminario", filialId: "filial-palmital", taxaEntrega: 7.9, cepPrefixes: ["89813", "89814"] },
-  { bairro: "Santa Maria", filialId: "filial-palmital", taxaEntrega: 8.9, cepPrefixes: ["89812"] },
-  { bairro: "Esplanada", filialId: "filial-palmital", taxaEntrega: 8.9, cepPrefixes: ["89812"] },
-  { bairro: "Dom Pascoal", filialId: "filial-palmital", taxaEntrega: 8.9, cepPrefixes: ["89814"] },
-  { bairro: "Dom Geronimo", filialId: "filial-palmital", taxaEntrega: 8.9, cepPrefixes: ["89811"] },
-  { bairro: "Monte Belo", filialId: "filial-palmital", taxaEntrega: 8.9, cepPrefixes: ["89812"] },
-  { bairro: "Industrial", filialId: "filial-palmital", taxaEntrega: 9.9, cepPrefixes: ["89813"] },
-  { bairro: "Progresso", filialId: "filial-palmital", taxaEntrega: 9.9, cepPrefixes: ["89813"] },
-  { bairro: "Campestre", filialId: "filial-palmital", taxaEntrega: 11.9, cepPrefixes: ["89814"] },
-  { bairro: "Comunidade Palmital dos Fundos", filialId: "filial-palmital", taxaEntrega: 12.9, aliases: ["palmital dos fundos"], cepPrefixes: ["89815"] },
-  { bairro: "Quedas do Palmital", filialId: "filial-palmital", taxaEntrega: 12.9, cepPrefixes: ["89815"] },
-  { bairro: "Santos Dumont", filialId: "filial-palmital", taxaEntrega: 12.9, cepPrefixes: ["89815"] },
-  { bairro: "Area Rural de Chapeco", filialId: "filial-palmital", taxaEntrega: 18.9, aliases: ["area rural", "interior"], cepPrefixes: ["89815"] },
+  {
+    bairro: "Centro",
+    filialId: "filial-lider",
+    taxaEntrega: 6.9,
+    cepPrefixes: ["89801"],
+  },
+  {
+    bairro: "Lider",
+    filialId: "filial-lider",
+    taxaEntrega: 6.9,
+    aliases: ["lider"],
+    cepPrefixes: ["89805"],
+  },
+  {
+    bairro: "Passo dos Fortes",
+    filialId: "filial-lider",
+    taxaEntrega: 6.9,
+    cepPrefixes: ["89805"],
+  },
+  {
+    bairro: "Presidente Medici",
+    filialId: "filial-lider",
+    taxaEntrega: 7.9,
+    aliases: ["presidente medici"],
+    cepPrefixes: ["89801", "89806"],
+  },
+  {
+    bairro: "Maria Goretti",
+    filialId: "filial-lider",
+    taxaEntrega: 7.9,
+    cepPrefixes: ["89801", "89806"],
+  },
+  {
+    bairro: "Sao Cristovao",
+    filialId: "filial-lider",
+    taxaEntrega: 7.9,
+    aliases: ["sao cristovao"],
+    cepPrefixes: ["89803", "89804"],
+  },
+  {
+    bairro: "Jardim America",
+    filialId: "filial-lider",
+    taxaEntrega: 7.9,
+    cepPrefixes: ["89803"],
+  },
+  {
+    bairro: "Jardim Italia",
+    filialId: "filial-lider",
+    taxaEntrega: 7.9,
+    cepPrefixes: ["89802", "89814"],
+  },
+  {
+    bairro: "Bela Vista",
+    filialId: "filial-lider",
+    taxaEntrega: 8.9,
+    cepPrefixes: ["89804"],
+  },
+  {
+    bairro: "Jardins",
+    filialId: "filial-lider",
+    taxaEntrega: 8.9,
+    cepPrefixes: ["89804"],
+  },
+  {
+    bairro: "Parque das Palmeiras",
+    filialId: "filial-lider",
+    taxaEntrega: 8.9,
+    cepPrefixes: ["89803"],
+  },
+  {
+    bairro: "Boa Vista",
+    filialId: "filial-lider",
+    taxaEntrega: 8.9,
+    cepPrefixes: ["89806"],
+  },
+  {
+    bairro: "Bom Pastor",
+    filialId: "filial-lider",
+    taxaEntrega: 8.9,
+    cepPrefixes: ["89806"],
+  },
+  {
+    bairro: "Sao Pedro",
+    filialId: "filial-lider",
+    taxaEntrega: 8.9,
+    cepPrefixes: ["89806"],
+  },
+  {
+    bairro: "Pinheirinho",
+    filialId: "filial-lider",
+    taxaEntrega: 8.9,
+    cepPrefixes: ["89806"],
+  },
+  {
+    bairro: "Bom Retiro",
+    filialId: "filial-lider",
+    taxaEntrega: 9.9,
+    cepPrefixes: ["89805", "89811"],
+  },
+  {
+    bairro: "Santa Paulina",
+    filialId: "filial-lider",
+    taxaEntrega: 9.9,
+    cepPrefixes: ["89805", "89811"],
+  },
+  {
+    bairro: "SAIC",
+    filialId: "filial-lider",
+    taxaEntrega: 9.9,
+    aliases: ["saic"],
+    cepPrefixes: ["89802"],
+  },
+  {
+    bairro: "Fronteira Sul",
+    filialId: "filial-lider",
+    taxaEntrega: 10.9,
+    cepPrefixes: ["89808"],
+  },
+  {
+    bairro: "Autodromo",
+    filialId: "filial-lider",
+    taxaEntrega: 10.9,
+    cepPrefixes: ["89808"],
+  },
+  {
+    bairro: "Araras",
+    filialId: "filial-lider",
+    taxaEntrega: 10.9,
+    cepPrefixes: ["89808"],
+  },
+  {
+    bairro: "Desbravador",
+    filialId: "filial-lider",
+    taxaEntrega: 10.9,
+    cepPrefixes: ["89811"],
+  },
+  {
+    bairro: "Lajeado",
+    filialId: "filial-lider",
+    taxaEntrega: 11.9,
+    cepPrefixes: ["89804"],
+  },
+  {
+    bairro: "Jardins do Vale",
+    filialId: "filial-lider",
+    taxaEntrega: 11.9,
+    cepPrefixes: ["89807"],
+  },
+  {
+    bairro: "Sao Lucas",
+    filialId: "filial-lider",
+    taxaEntrega: 9.9,
+    cepPrefixes: ["89806", "89812"],
+  },
+  {
+    bairro: "Paraiso",
+    filialId: "filial-lider",
+    taxaEntrega: 9.9,
+    cepPrefixes: ["89806"],
+  },
+  {
+    bairro: "Efapi",
+    filialId: "filial-efapi-tancredo",
+    taxaEntrega: 6.9,
+    cepPrefixes: ["89809"],
+  },
+  {
+    bairro: "Eldorado",
+    filialId: "filial-efapi-tancredo",
+    taxaEntrega: 7.9,
+    cepPrefixes: ["89810"],
+  },
+  {
+    bairro: "Cristo Rei",
+    filialId: "filial-efapi-tancredo",
+    taxaEntrega: 7.9,
+    cepPrefixes: ["89810"],
+  },
+  {
+    bairro: "Alvorada",
+    filialId: "filial-efapi-tancredo",
+    taxaEntrega: 8.9,
+    cepPrefixes: ["89804", "89810"],
+  },
+  {
+    bairro: "Engenho Braun",
+    filialId: "filial-efapi-tancredo",
+    taxaEntrega: 9.9,
+    cepPrefixes: ["89804", "89809"],
+  },
+  {
+    bairro: "Agua Santa",
+    filialId: "filial-efapi-tancredo",
+    taxaEntrega: 9.9,
+    cepPrefixes: ["89810"],
+  },
+  {
+    bairro: "Belvedere",
+    filialId: "filial-efapi-atilio-fontana",
+    taxaEntrega: 7.9,
+    cepPrefixes: ["89810"],
+  },
+  {
+    bairro: "Trevo",
+    filialId: "filial-efapi-atilio-fontana",
+    taxaEntrega: 7.9,
+    cepPrefixes: ["89810"],
+  },
+  {
+    bairro: "Vila Rica",
+    filialId: "filial-efapi-atilio-fontana",
+    taxaEntrega: 8.9,
+    cepPrefixes: ["89810"],
+  },
+  {
+    bairro: "Alto da Serra",
+    filialId: "filial-efapi-atilio-fontana",
+    taxaEntrega: 12.9,
+    cepPrefixes: ["89816"],
+  },
+  {
+    bairro: "Goio-En",
+    filialId: "filial-efapi-atilio-fontana",
+    taxaEntrega: 14.9,
+    aliases: ["goio en"],
+    cepPrefixes: ["89816"],
+  },
+  {
+    bairro: "Centro Marechal Bormann",
+    filialId: "filial-efapi-atilio-fontana",
+    taxaEntrega: 14.9,
+    aliases: ["centro marechal bormann", "marechal bormann"],
+    cepPrefixes: ["89816"],
+  },
+  {
+    bairro: "Figueira",
+    filialId: "filial-efapi-atilio-fontana",
+    taxaEntrega: 14.9,
+    cepPrefixes: ["89816"],
+  },
+  {
+    bairro: "Vederti",
+    filialId: "filial-efapi-atilio-fontana",
+    taxaEntrega: 14.9,
+    cepPrefixes: ["89816"],
+  },
+  {
+    bairro: "Perimetral",
+    filialId: "filial-efapi-atilio-fontana",
+    taxaEntrega: 14.9,
+    cepPrefixes: ["89816"],
+  },
+  {
+    bairro: "Palmital",
+    filialId: "filial-palmital",
+    taxaEntrega: 6.9,
+    cepPrefixes: ["89812", "89814"],
+  },
+  {
+    bairro: "Santo Antonio",
+    filialId: "filial-palmital",
+    taxaEntrega: 7.9,
+    aliases: ["santo antonio"],
+    cepPrefixes: ["89815"],
+  },
+  {
+    bairro: "Universitario",
+    filialId: "filial-palmital",
+    taxaEntrega: 7.9,
+    cepPrefixes: ["89812", "89814"],
+  },
+  {
+    bairro: "Seminario",
+    filialId: "filial-palmital",
+    taxaEntrega: 7.9,
+    cepPrefixes: ["89813", "89814"],
+  },
+  {
+    bairro: "Santa Maria",
+    filialId: "filial-palmital",
+    taxaEntrega: 8.9,
+    cepPrefixes: ["89812"],
+  },
+  {
+    bairro: "Esplanada",
+    filialId: "filial-palmital",
+    taxaEntrega: 8.9,
+    cepPrefixes: ["89812"],
+  },
+  {
+    bairro: "Dom Pascoal",
+    filialId: "filial-palmital",
+    taxaEntrega: 8.9,
+    cepPrefixes: ["89814"],
+  },
+  {
+    bairro: "Dom Geronimo",
+    filialId: "filial-palmital",
+    taxaEntrega: 8.9,
+    cepPrefixes: ["89811"],
+  },
+  {
+    bairro: "Monte Belo",
+    filialId: "filial-palmital",
+    taxaEntrega: 8.9,
+    cepPrefixes: ["89812"],
+  },
+  {
+    bairro: "Industrial",
+    filialId: "filial-palmital",
+    taxaEntrega: 9.9,
+    cepPrefixes: ["89813"],
+  },
+  {
+    bairro: "Progresso",
+    filialId: "filial-palmital",
+    taxaEntrega: 9.9,
+    cepPrefixes: ["89813"],
+  },
+  {
+    bairro: "Campestre",
+    filialId: "filial-palmital",
+    taxaEntrega: 11.9,
+    cepPrefixes: ["89814"],
+  },
+  {
+    bairro: "Comunidade Palmital dos Fundos",
+    filialId: "filial-palmital",
+    taxaEntrega: 12.9,
+    aliases: ["palmital dos fundos"],
+    cepPrefixes: ["89815"],
+  },
+  {
+    bairro: "Quedas do Palmital",
+    filialId: "filial-palmital",
+    taxaEntrega: 12.9,
+    cepPrefixes: ["89815"],
+  },
+  {
+    bairro: "Santos Dumont",
+    filialId: "filial-palmital",
+    taxaEntrega: 12.9,
+    cepPrefixes: ["89815"],
+  },
+  {
+    bairro: "Area Rural de Chapeco",
+    filialId: "filial-palmital",
+    taxaEntrega: 18.9,
+    aliases: ["area rural", "interior"],
+    cepPrefixes: ["89815"],
+  },
 ];
 
 function normalizarTexto(valor) {
@@ -158,9 +456,10 @@ function assertNonEmptyString(value, message) {
 }
 
 function sanitizeText(value, maxLength = 500) {
-  return String(value || "").trim().slice(0, maxLength);
+  return String(value || "")
+    .trim()
+    .slice(0, maxLength);
 }
-
 
 function getPagamentoOnline(pagamento, pedidoId) {
   if (!isPagamentoOnline(pagamento)) return null;
@@ -197,7 +496,6 @@ function getMercadoPagoToken() {
 function getAmbienteMercadoPago(token) {
   return token.startsWith("TEST-") ? "teste" : "producao";
 }
-
 
 async function buscarPagamentoMercadoPago(paymentId, token) {
   const response = await fetch(
@@ -239,7 +537,8 @@ async function atualizarPedidoPorPagamentoMercadoPago(paymentId, token) {
     "pagamentoOnline.status": statusPagamento,
     "pagamentoOnline.statusProvedor": pagamento.status || null,
     "pagamentoOnline.transacaoId": String(pagamento.id || paymentId),
-    "pagamentoOnline.atualizadoEm": admin.firestore.FieldValue.serverTimestamp(),
+    "pagamentoOnline.atualizadoEm":
+      admin.firestore.FieldValue.serverTimestamp(),
     atualizadoEm: admin.firestore.FieldValue.serverTimestamp(),
   };
 
@@ -253,51 +552,59 @@ async function atualizarPedidoPorPagamentoMercadoPago(paymentId, token) {
   return { ok: true, pedidoId, status: statusPagamento };
 }
 
-async function criarPreferenciaCartaoMercadoPago({ pedidoId, pedido, token, email }) {
+async function criarPreferenciaCartaoMercadoPago({
+  pedidoId,
+  pedido,
+  token,
+  email,
+}) {
   const total = Number((pedido.total || 0).toFixed(2));
 
   if (!Number.isFinite(total) || total <= 0) {
     throw new HttpsError("failed-precondition", "Total do pedido invalido.");
   }
 
-  const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      "X-Idempotency-Key": `${pedidoId}-cartao`,
-    },
-    body: JSON.stringify({
-      items: [
-        {
-          id: pedidoId,
-          title: `Pedido ${pedido.codigoPedido || pedidoId} - Farmacia Super Popular`,
-          description: "Pagamento online do pedido",
-          quantity: 1,
-          currency_id: "BRL",
-          unit_price: total,
-        },
-      ],
-      payer: {
-        email,
-        name: pedido.cliente?.nome || "Cliente",
+  const response = await fetch(
+    "https://api.mercadopago.com/checkout/preferences",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "X-Idempotency-Key": `${pedidoId}-cartao`,
       },
-      external_reference: pedidoId,
-      notification_url: mercadoPagoWebhookUrl,
-      payment_methods: {
-        excluded_payment_types: [
-          { id: "ticket" },
-          { id: "atm" },
-          { id: "bank_transfer" },
+      body: JSON.stringify({
+        items: [
+          {
+            id: pedidoId,
+            title: `Pedido ${pedido.codigoPedido || pedidoId} - Farmacia Super Popular`,
+            description: "Pagamento online do pedido",
+            quantity: 1,
+            currency_id: "BRL",
+            unit_price: total,
+          },
         ],
-        installments: 12,
-      },
-      metadata: {
-        pedido_id: pedidoId,
-        metodo: "cartao",
-      },
-    }),
-  });
+        payer: {
+          email,
+          name: pedido.cliente?.nome || "Cliente",
+        },
+        external_reference: pedidoId,
+        notification_url: mercadoPagoWebhookUrl,
+        payment_methods: {
+          excluded_payment_types: [
+            { id: "ticket" },
+            { id: "atm" },
+            { id: "bank_transfer" },
+          ],
+          installments: 12,
+        },
+        metadata: {
+          pedido_id: pedidoId,
+          metodo: "cartao",
+        },
+      }),
+    },
+  );
 
   const preferencia = await response.json().catch(() => ({}));
 
@@ -346,7 +653,10 @@ async function getPedidoDoUsuario(pedidoId, uid) {
   const pedido = pedidoSnap.data();
 
   if (pedido.userUid !== uid && !(await isAdminAtivo(uid))) {
-    throw new HttpsError("permission-denied", "Pedido pertence a outro usuario.");
+    throw new HttpsError(
+      "permission-denied",
+      "Pedido pertence a outro usuario.",
+    );
   }
 
   return { pedidoRef, pedido };
@@ -381,7 +691,10 @@ exports.criarPedido = onCall(async (request) => {
   const usuarioSnap = await usuarioRef.get();
 
   if (!usuarioSnap.exists || usuarioSnap.data().ativo !== true) {
-    throw new HttpsError("permission-denied", "Conta sem permissao para pedidos.");
+    throw new HttpsError(
+      "permission-denied",
+      "Conta sem permissao para pedidos.",
+    );
   }
 
   const produtos = [];
@@ -390,7 +703,12 @@ exports.criarPedido = onCall(async (request) => {
     const produtoId = sanitizeText(item?.id, 120);
     const quantidade = Number(item?.quantidade || 0);
 
-    if (!produtoId || !Number.isInteger(quantidade) || quantidade < 1 || quantidade > 99) {
+    if (
+      !produtoId ||
+      !Number.isInteger(quantidade) ||
+      quantidade < 1 ||
+      quantidade > 99
+    ) {
       throw new HttpsError("invalid-argument", "Item do carrinho invalido.");
     }
 
@@ -402,7 +720,11 @@ exports.criarPedido = onCall(async (request) => {
 
     const produto = produtoSnap.data();
 
-    if (produto.ativo === false || typeof produto.preco !== "number" || produto.preco <= 0) {
+    if (
+      produto.ativo === false ||
+      typeof produto.preco !== "number" ||
+      produto.preco <= 0
+    ) {
       throw new HttpsError("failed-precondition", "Produto indisponivel.");
     }
 
@@ -485,7 +807,10 @@ exports.criarPedido = onCall(async (request) => {
     filial = getFilialById(filialId);
 
     if (!filial) {
-      throw new HttpsError("invalid-argument", "Filial para retirada invalida.");
+      throw new HttpsError(
+        "invalid-argument",
+        "Filial para retirada invalida.",
+      );
     }
 
     retiradaNormalizada = {
@@ -754,7 +1079,7 @@ exports.criarPedido = onCall(async (request) => {
       observacoes: sanitizeText(data.observacoes, 500),
       subtotal,
       taxaEntrega,
-      itens: produtosAtualizados.map(
+      itens: produtos.map(
         ({ filialId, filialIds, refPath, ...produto }) => produto,
       ),
       total,
@@ -768,7 +1093,6 @@ exports.criarPedido = onCall(async (request) => {
       pedidoId: codigoPedido,
       userUid: null,
       perfilDestino: "admin",
-      filialId: filial.id,
       lida: false,
       criadoEm: now,
     });
@@ -850,7 +1174,7 @@ exports.marcarPedidoEntregue = onCall(async (request) => {
   return { ok: true };
 });
 
-exports.criarPagamentoPix = onCall({ secrets: [mercadoPagoAccessToken] }, async (request) => {
+exports.aceitarEntrega = onCall(async (request) => {
   assertSignedIn(request);
 
   const { pedidoId } = request.data || {};
@@ -859,169 +1183,240 @@ exports.criarPagamentoPix = onCall({ secrets: [mercadoPagoAccessToken] }, async 
     throw new HttpsError("invalid-argument", "Informe o pedidoId.");
   }
 
-  const { pedidoRef, pedido } = await getPedidoDoUsuario(
-    pedidoId,
-    request.auth.uid,
-  );
-  const token = getMercadoPagoToken();
-  const total = Number((pedido.total || 0).toFixed(2));
-  const email = pedido.cliente?.email || request.auth.token.email;
+  const uid = request.auth.uid;
+  const usuarioSnap = await db.collection("usuarios").doc(uid).get();
+  const usuario = usuarioSnap.exists ? usuarioSnap.data() : null;
 
-  if (!email) {
+  if (!usuario || usuario.perfil !== "entregador" || usuario.ativo !== true) {
     throw new HttpsError(
-      "failed-precondition",
-      "Sua conta precisa ter e-mail para gerar Pix online.",
+      "permission-denied",
+      "Conta sem permissao de entregador.",
     );
   }
 
-  if (!Number.isFinite(total) || total <= 0) {
-    throw new HttpsError("failed-precondition", "Total do pedido invalido.");
-  }
+  const pedidoRef = db.collection("pedidos").doc(pedidoId);
 
-  const formaPagamento = normalizarFormaPagamento(
-    pedido.pagamentoDetalhes?.metodo || pedido.pagamento,
-  );
+  await db.runTransaction(async (transaction) => {
+    const pedidoSnap = await transaction.get(pedidoRef);
 
-  if (formaPagamento !== FORMAS_PAGAMENTO.pix) {
-    throw new HttpsError(
-      "failed-precondition",
-      "Este pedido nao foi criado com pagamento Pix.",
-    );
-  }
+    if (!pedidoSnap.exists) {
+      throw new HttpsError("not-found", "Pedido nao encontrado.");
+    }
 
-  const response = await fetch("https://api.mercadopago.com/v1/payments", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      "X-Idempotency-Key": `${pedidoId}-pix`,
-    },
-    body: JSON.stringify({
-      transaction_amount: total,
-      description: `Pedido ${pedido.codigoPedido || pedidoId} - Farmacia Super Popular`,
-      payment_method_id: "pix",
-      external_reference: pedidoId,
-      notification_url: mercadoPagoWebhookUrl,
-      payer: {
-        email,
-        first_name: pedido.cliente?.nome || "Cliente",
-      },
-      metadata: {
-        pedido_id: pedidoId,
-        user_uid: request.auth.uid,
-      },
-    }),
+    const pedido = pedidoSnap.data();
+
+    if (usuario.filialId && pedido.filialId !== usuario.filialId) {
+      throw new HttpsError(
+        "permission-denied",
+        "Este pedido nao e da sua filial.",
+      );
+    }
+
+    if (pedido.tipoAtendimento !== "entrega") {
+      throw new HttpsError(
+        "failed-precondition",
+        "Este pedido nao precisa de entregador.",
+      );
+    }
+
+    // entregadorId e status "entrega" sao sempre definidos juntos (aqui ou na
+    // atribuicao manual do admin), entao checar o status ja cobre o caso de
+    // a entrega ter acabado de ser aceita por outra pessoa.
+    if (pedido.status !== "pronto_retirada") {
+      throw new HttpsError(
+        "failed-precondition",
+        "Esta entrega ja foi aceita por outro entregador ou nao esta mais disponivel.",
+      );
+    }
+
+    transaction.update(pedidoRef, {
+      entregadorId: uid,
+      entregadorNome: usuario.nome || usuario.email || uid,
+      status: "entrega",
+      atualizadoEm: admin.firestore.FieldValue.serverTimestamp(),
+    });
   });
 
-  const pagamento = await response.json().catch(() => ({}));
+  return { ok: true };
+});
 
-  if (!response.ok) {
-    console.error("Erro Mercado Pago Pix:", pagamento);
-    throw new HttpsError(
-      "internal",
-      pagamento?.message || "Nao foi possivel gerar o Pix.",
+exports.criarPagamentoPix = onCall(
+  { secrets: [mercadoPagoAccessToken] },
+  async (request) => {
+    assertSignedIn(request);
+
+    const { pedidoId } = request.data || {};
+
+    if (!pedidoId) {
+      throw new HttpsError("invalid-argument", "Informe o pedidoId.");
+    }
+
+    const { pedidoRef, pedido } = await getPedidoDoUsuario(
+      pedidoId,
+      request.auth.uid,
     );
-  }
+    const token = getMercadoPagoToken();
+    const total = Number((pedido.total || 0).toFixed(2));
+    const email = pedido.cliente?.email || request.auth.token.email;
 
-  const transactionData = pagamento.point_of_interaction?.transaction_data || {};
-  const statusPagamento = mapMercadoPagoStatus(pagamento.status);
+    if (!email) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Sua conta precisa ter e-mail para gerar Pix online.",
+      );
+    }
 
-  await pedidoRef.update({
-    pagamentoOnline: {
-      provedor: "mercado_pago",
-      ambiente: getAmbienteMercadoPago(token),
-      metodo: "pix",
+    if (!Number.isFinite(total) || total <= 0) {
+      throw new HttpsError("failed-precondition", "Total do pedido invalido.");
+    }
+
+    const formaPagamento = normalizarFormaPagamento(
+      pedido.pagamentoDetalhes?.metodo || pedido.pagamento,
+    );
+
+    if (formaPagamento !== FORMAS_PAGAMENTO.pix) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Este pedido nao foi criado com pagamento Pix.",
+      );
+    }
+
+    const response = await fetch("https://api.mercadopago.com/v1/payments", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "X-Idempotency-Key": `${pedidoId}-pix`,
+      },
+      body: JSON.stringify({
+        transaction_amount: total,
+        description: `Pedido ${pedido.codigoPedido || pedidoId} - Farmacia Super Popular`,
+        payment_method_id: "pix",
+        external_reference: pedidoId,
+        notification_url: mercadoPagoWebhookUrl,
+        payer: {
+          email,
+          first_name: pedido.cliente?.nome || "Cliente",
+        },
+        metadata: {
+          pedido_id: pedidoId,
+          user_uid: request.auth.uid,
+        },
+      }),
+    });
+
+    const pagamento = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      console.error("Erro Mercado Pago Pix:", pagamento);
+      throw new HttpsError(
+        "internal",
+        pagamento?.message || "Nao foi possivel gerar o Pix.",
+      );
+    }
+
+    const transactionData =
+      pagamento.point_of_interaction?.transaction_data || {};
+    const statusPagamento = mapMercadoPagoStatus(pagamento.status);
+
+    await pedidoRef.update({
+      pagamentoOnline: {
+        provedor: "mercado_pago",
+        ambiente: getAmbienteMercadoPago(token),
+        metodo: "pix",
+        status: statusPagamento,
+        statusProvedor: pagamento.status || null,
+        transacaoId: String(pagamento.id || ""),
+        qrCode: transactionData.qr_code_base64 || null,
+        copiaECola: transactionData.qr_code || null,
+        linkPagamento: transactionData.ticket_url || null,
+        mensagem: "Pix gerado. Aguardando confirmacao do Mercado Pago.",
+        total,
+        atualizadoEm: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      "pagamentoDetalhes.status": statusPagamento,
+      atualizadoEm: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return {
+      ok: true,
       status: statusPagamento,
-      statusProvedor: pagamento.status || null,
       transacaoId: String(pagamento.id || ""),
       qrCode: transactionData.qr_code_base64 || null,
       copiaECola: transactionData.qr_code || null,
       linkPagamento: transactionData.ticket_url || null,
-      mensagem: "Pix gerado. Aguardando confirmacao do Mercado Pago.",
-      total,
+    };
+  },
+);
+
+exports.criarPagamentoCartao = onCall(
+  { secrets: [mercadoPagoAccessToken] },
+  async (request) => {
+    assertSignedIn(request);
+
+    const { pedidoId } = request.data || {};
+
+    if (!pedidoId) {
+      throw new HttpsError("invalid-argument", "Informe pedidoId.");
+    }
+
+    const { pedidoRef, pedido } = await getPedidoDoUsuario(
+      pedidoId,
+      request.auth.uid,
+    );
+    const token = getMercadoPagoToken();
+    const email = pedido.cliente?.email || request.auth.token.email;
+
+    if (!email) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Sua conta precisa ter e-mail para gerar pagamento online.",
+      );
+    }
+
+    const formaPagamento = normalizarFormaPagamento(
+      pedido.pagamentoDetalhes?.metodo || pedido.pagamento,
+    );
+
+    if (formaPagamento !== FORMAS_PAGAMENTO.cartaoOnline) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Este pedido nao foi criado com pagamento por cartao online.",
+      );
+    }
+
+    const preferencia = await criarPreferenciaCartaoMercadoPago({
+      pedidoId,
+      pedido,
+      token,
+      email,
+    });
+
+    await pedidoRef.update({
+      pagamentoOnline: {
+        provedor: "mercado_pago",
+        ambiente: getAmbienteMercadoPago(token),
+        metodo: "cartao",
+        status: STATUS_PAGAMENTO.pendente,
+        transacaoId: preferencia.id,
+        linkPagamento: preferencia.initPoint,
+        mensagem:
+          "Link de pagamento gerado. Aguardando confirmacao do Mercado Pago.",
+        total: preferencia.total,
+        atualizadoEm: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      "pagamentoDetalhes.status": STATUS_PAGAMENTO.pendente,
       atualizadoEm: admin.firestore.FieldValue.serverTimestamp(),
-    },
-    "pagamentoDetalhes.status": statusPagamento,
-    atualizadoEm: admin.firestore.FieldValue.serverTimestamp(),
-  });
+    });
 
-  return {
-    ok: true,
-    status: statusPagamento,
-    transacaoId: String(pagamento.id || ""),
-    qrCode: transactionData.qr_code_base64 || null,
-    copiaECola: transactionData.qr_code || null,
-    linkPagamento: transactionData.ticket_url || null,
-  };
-});
-
-exports.criarPagamentoCartao = onCall({ secrets: [mercadoPagoAccessToken] }, async (request) => {
-  assertSignedIn(request);
-
-  const { pedidoId } = request.data || {};
-
-  if (!pedidoId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Informe pedidoId.",
-    );
-  }
-
-  const { pedidoRef, pedido } = await getPedidoDoUsuario(
-    pedidoId,
-    request.auth.uid,
-  );
-  const token = getMercadoPagoToken();
-  const email = pedido.cliente?.email || request.auth.token.email;
-
-  if (!email) {
-    throw new HttpsError(
-      "failed-precondition",
-      "Sua conta precisa ter e-mail para gerar pagamento online.",
-    );
-  }
-
-  const formaPagamento = normalizarFormaPagamento(
-    pedido.pagamentoDetalhes?.metodo || pedido.pagamento,
-  );
-
-  if (formaPagamento !== FORMAS_PAGAMENTO.cartaoOnline) {
-    throw new HttpsError(
-      "failed-precondition",
-      "Este pedido nao foi criado com pagamento por cartao online.",
-    );
-  }
-
-  const preferencia = await criarPreferenciaCartaoMercadoPago({
-    pedidoId,
-    pedido,
-    token,
-    email,
-  });
-
-  await pedidoRef.update({
-    pagamentoOnline: {
-      provedor: "mercado_pago",
-      ambiente: getAmbienteMercadoPago(token),
-      metodo: "cartao",
+    return {
+      ok: true,
       status: STATUS_PAGAMENTO.pendente,
       transacaoId: preferencia.id,
       linkPagamento: preferencia.initPoint,
-      mensagem: "Link de pagamento gerado. Aguardando confirmacao do Mercado Pago.",
-      total: preferencia.total,
-      atualizadoEm: admin.firestore.FieldValue.serverTimestamp(),
-    },
-    "pagamentoDetalhes.status": STATUS_PAGAMENTO.pendente,
-    atualizadoEm: admin.firestore.FieldValue.serverTimestamp(),
-  });
-
-  return {
-    ok: true,
-    status: STATUS_PAGAMENTO.pendente,
-    transacaoId: preferencia.id,
-    linkPagamento: preferencia.initPoint,
-  };
-});
+    };
+  },
+);
 
 exports.webhookPagamento = onRequest(
   { secrets: [mercadoPagoAccessToken] },
@@ -1324,7 +1719,8 @@ exports.sincronizarBularioAnvisaManual = onRequest(
  */
 exports.abrirBulaAnvisa = onRequest(async (request, response) => {
   const numeroProcesso = String(request.query.numeroProcesso || "").trim();
-  const tipo = request.query.tipo === "profissional" ? "profissional" : "paciente";
+  const tipo =
+    request.query.tipo === "profissional" ? "profissional" : "paciente";
 
   if (!numeroProcesso) {
     response.status(400).json({ ok: false, erro: "Informe numeroProcesso." });

@@ -157,6 +157,12 @@ service cloud.firestore {
           || resource.data.userId == request.auth.uid
           || resource.data.entregadorId == request.auth.uid
           || canAccessFilial(resource.data.filialId)
+          || (
+            hasProfile("entregador")
+            && resource.data.status == "pronto_retirada"
+            && resource.data.tipoAtendimento == "entrega"
+            && resource.data.filialId == userProfile().data.filialId
+          )
         );
 
       allow update: if (
