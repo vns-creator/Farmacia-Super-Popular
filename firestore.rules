@@ -135,6 +135,13 @@ service cloud.firestore {
             || usuarioSemFilialAinda()
           )
           && request.resource.data.filialId == userProfile().data.filialId
+          // Admin de filial nunca pode se auto-promover (ou promover outro
+          // usuario) a admin geral - so quem ja e admin geral concede isso,
+          // pelo primeiro ramo (isGeneralAdmin()) deste allow update.
+          && (
+            !request.resource.data.keys().hasAny(["adminGeral"])
+            || request.resource.data.adminGeral == false
+          )
         )
         || (
           isOwner(uid)
